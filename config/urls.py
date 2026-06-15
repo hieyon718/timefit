@@ -1,31 +1,26 @@
-"""
-URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import TemplateView #임시 화면용
+from django.shortcuts import redirect
+
+def root_redirect(request):
+    """
+    사용자가 최초 도메인(http://127.0.0.1:8000/)으로 접속했을 때,
+    로그인 여부에 따라 홈 화면이나 로그인 페이지로 자동 리다이렉트해주는 헬퍼 뷰입니다.
+    """
+    if request.user.is_authenticated:
+        return redirect('home')  # 로그인 상태면 타임핏 홈 화면으로
+    return redirect('/accounts/login/')  # 비로그인이면 올어스 로그인 화면으로
 
 urlpatterns = [
+    # 1. 아무 주소도 입력하지 않고 접속했을 때('/')의 리다이렉트 처리를 위로 올립니다.
+    path('', root_redirect, name='root_index'),
+    
+    # 2. 장고 기본 관리자 페이지
     path('admin/', admin.site.urls),
-
-    # django-allauth가 제공하는 모든 인증 URL을 /accounts/ 경로 아래에 매핑
-    # (예: /accounts/login/, /accounts/google/login/ 등 API가 자동 생성됨)
+    
+    # 3. 구글 소셜 로그인 및 계정 관리를 담당하는 django-allauth URL 구조
     path('accounts/', include('allauth.urls')),
     
-    # 임시 홈 화면 라우팅 (로그인 성공 테스트용)
-    path('', TemplateView.as_view(template_name='home.html'), name='home'),
-
+    # 4. 앱 내부의 주소들을 연결 (home/, mypage/, api/todos/ 등이 매핑됨)
+    path('', include('timefit.urls')),
 ]

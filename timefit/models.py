@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.conf import settings
 
 class User(AbstractUser):
     """
@@ -51,9 +52,6 @@ class User(AbstractUser):
     def __str__(self):
         # Django 시스템이나 GUI 툴에서 유저 객체를 볼 때 username이 노출되도록 설정
         return self.username
-    
-from django.db import models
-from django.conf import settings
 
 class Category(models.Model):
     """
