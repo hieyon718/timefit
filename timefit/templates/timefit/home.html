@@ -12,41 +12,56 @@
 </head>
 <body>
 
-<div class="app-container">
-    <header style="display: flex; justify-content: space-between; align-items: flex-start;">
-    <div>
-        <h1 style="font-size: 24px; margin: 0 0 4px 0; font-weight: 700;">TimeFit</h1>
-        <div class="date-sub" id="current-date">⚡ 今日のタスク</div>
-    </div>
-    <a href="{% url 'mypage' %}" style="text-decoration: none; font-size: 20px; color: #7f8c8d; padding: 4px;">⚙️</a>
-</header>
+    <div class="app-container">
+        <header style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <h1 style="font-size: 24px; margin: 0 0 4px 0; font-weight: 700;">TimeFit</h1>
+            <div class="date-sub" id="current-date">⚡ 今日のタスク</div>
+        </div>
+        <a href="{% url 'mypage' %}" style="text-decoration: none; font-size: 20px; color: #7f8c8d; padding: 4px;">⚙️</a>
+        </header>
 
-    <div class="input-section">
-        <form id="todo-form">
-            {% csrf_token %}
-            <div class="form-group">
-                <select id="category-select" required>
-                    {% for category in categories %}
-                        <option value="{{ category.id }}">{{ category.name }}</option>
-                    {% empty %}
-                        <option value="">カテゴリなし</option>
-                    {% endfor %}
-                </select>
-                <input type="text" id="content-input" placeholder="何を実行しますか？" required>
-            </div>
-            <div class="form-group" style="justify-content: space-between; align-items: center;">
-                <div class="time-input-wrapper">
-                    <input type="number" id="time-input" placeholder="予想" min="1">
-                    <span style="font-size: 13px; color:#7f8c8d;">分</span>
+        <div class="input-section" id="form-container">
+            <form id="todo-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <select id="category-select" required>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% empty %}
+                            <option value="">カテゴリなし</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" id="content-input" placeholder="何を実行しますか？" required>
                 </div>
-                <button type="submit" class="submit-btn">タスクを追加</button>
-            </div>
-        </form>
+                <div class="form-group" style="justify-content: space-between; align-items: center;">
+                    <div class="time-input-wrapper">
+                        <input type="number" id="time-input" placeholder="予想" min="1">
+                        <span style="font-size: 13px; color:#7f8c8d;">分</span>
+                    </div>
+                    <button type="submit" class="submit-btn" id="form-submit-btn">タスクを追加</button>
+                </div>
+            </form>
+        </div>
+
+        <ul class="todo-list" id="todo-list">
+            </ul>
     </div>
 
-    <ul class="todo-list" id="todo-list">
-        </ul>
-</div>
+    <div class="modal-overlay" id="time-modal">
+        <div class="modal-content">
+            <h3>⏱️ 実績時間の記録</h3>
+            <p>このタスクを実行するのにどれくらいかかりましたか？</p>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="number" id="actual-time-input" placeholder="実際にかかった時間" min="0" style="flex:1;">
+                <span style="font-size: 14px; color:#7f8c8d;">分</span>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn btn-skip" id="btn-modal-skip">スキップ</button>
+                <button class="modal-btn btn-confirm" id="btn-modal-submit">保存する</button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>

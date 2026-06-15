@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from .models import Todo, Category
 from .serializers import TodoSerializer
+from rest_framework.generics import get_object_or_404
 
 # ==========================================
 # 0. 마이 페이지 뷰 (Pure Django View)
@@ -61,4 +62,25 @@ class TodoListCreateAPIView(APIView):
             serializer.save(user=request.user, target_date=timezone.localdate())
             return Response(serializer.data, status=status.HTTP_201_CREATED)
             
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class TodoDetailAPIView(APIView):
+    """
+    특정 할 일의 완료 상태 및 실제 소요 시간을 업데이트(Update)하는 API입니다.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        """
+        체크박스 선택 시 is_completed와 actual_time을 부분 업데이트합니다.
+        """
+        # 현재 유저가 소유한 투두인지 정확하게 검증하며 가져오기
+        todo = get_object_or_404(Todo, pk=pk, user=request.user)
+        
+        # partial=True를 주어 필요한 필드만 넘어와도 유효성 검사를 통과!!
+        serializer = TodoSerializer(todo, data=request.data, partial=True, context={'request': request})
+        
+        if serializer.is_valid():
+            serializer.save() #넘겨받은 데이터를 알아서 반영저장
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

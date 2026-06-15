@@ -1,6 +1,6 @@
 # urls.py 수정
 from django.urls import path
-from .views import HomeView, TodoListCreateAPIView, MypageView # 👈 MypageView 추가
+from .views import HomeView, TodoListCreateAPIView, TodoDetailAPIView, MypageView # 👈 MypageView 추가
 
 urlpatterns = [
     # 1. 메인 홈 화면 (오직 체크리스트만 존재하는 미니멀 피드)
@@ -11,4 +11,7 @@ urlpatterns = [
     
     # 3. 데이터 통신 API
     path('api/todos/', TodoListCreateAPIView.as_view(), name='todo-list-create'),
+
+    # 4. 특정 투두 수정
+    path('api/todos/<int:pk>/', TodoDetailAPIView.as_view(), name='todo-detail'),
 ]
