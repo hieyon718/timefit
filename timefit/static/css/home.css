@@ -1,0 +1,106 @@
+
+:root {
+    --bg-color: #f8f9fa;
+    --card-bg: #ffffff;
+    --text-main: #2c3e50;
+    --border-color: #e9ecef;
+}
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+.app-container {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    padding: 24px;
+}
+header {
+    margin-bottom: 24px;
+}
+header h1 {
+    font-size: 24px;
+    margin: 0 0 4px 0;
+    font-weight: 700;
+}
+.date-sub {
+    font-size: 14px;
+    color: #7f8c8d;
+}
+.input-section {
+    background: var(--bg-color);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+}
+.form-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+select, input[type="text"], input[type="number"] {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+input[type="text"] {
+    flex: 1;
+}
+.time-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 110px;
+}
+.time-input-wrapper input {
+    width: 100%;
+}
+.submit-btn {
+    width: 100%;
+    background: #2c3e50;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+}
+.todo-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.todo-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.category-badge {
+    font-size: 11px;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 12px;
+    font-weight: bold;
+    min-width: 40px;
+    text-align: center;
+}
+.todo-content {
+    flex: 1;
+    font-size: 15px;
+}
+.todo-est-time {
+    font-size: 13px;
+    color: #95a5a6;
+    margin-left: 8px;
+}
