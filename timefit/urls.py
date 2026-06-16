@@ -16,8 +16,14 @@ urlpatterns = [
     # 메인 체크리스트 수정
     path('api/todos/<int:pk>/', TodoDetailAPIView.as_view(), name='todo-detail'),
     
+    # 메인 체크리스트 삭제
+    path('api/todos/<int:todo_id>/', TodoDetailAPIView.as_view(), name='todo-detail'),
+
     # 주간 분석 데이터 전용 API 주소
     path('api/analysis/weekly/', WeeklyAnalysisAPIView.as_view(), name='analysis-weekly'),
+
+    # 캘린더 투두 화면
+    path('calendar/', views.calendar, name='calendar'),
 
     # 분석 페이지 화면
     path('analysis/week/', views.weekly_analysis, name='analysis_weekly'),

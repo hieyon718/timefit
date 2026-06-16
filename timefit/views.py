@@ -12,6 +12,7 @@ from rest_framework.generics import get_object_or_404
 from datetime import timedelta
 from .models import Todo
 from .serializers import TodoSerializer
+from django.utils.dateparse import parse_date
 
 # ==========================================
 # 0. 마이 페이지 뷰 (Pure Django View)
@@ -48,23 +49,34 @@ class TodoListCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """오늘 날짜의 투두 데이터 전송 (Read)"""
-        today = timezone.localdate()
-        todos = Todo.objects.filter(user=request.user, target_date=today)
-        
-        # serializer에 context로 request를 넘겨주어야 이미지 고유 URL 변환 등이 원활합니다.
+        """프론트엔드의 날짜 파라미터를 읽고, 기본값을 오늘로"""
+        date_str = request.query_params.get('date')
+        if date_str:
+            target_date = parse_date(date_str)
+        else:
+            target_date = timezone.localdate()
+
+        # 해당 유저의 '선택한 날짜' 투두만 정밀 필터링
+        todos = Todo.objects.filter(user=request.user, target_date=target_date).order_by('created_at')
         serializer = TodoSerializer(todos, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        """새로운 투두 생성 (Create)"""
+        """
+        새로운 투두 생성 (Create)
+        프론트에서 날짜를 파라미터로 받아오기
+        """
+        date_str = request.data.get('target_date')
+        if date_str:
+            target_date = parse_date(date_str)
+        else:
+            target_date = timezone.localdate()
+
         serializer = TodoSerializer(data=request.data, context={'request': request})
-        
         if serializer.is_valid():
-            # 저장할 때 현재 유저와 오늘 날짜를 백엔드에서 강제로 바인딩합니다.
-            serializer.save(user=request.user, target_date=timezone.localdate())
+            # 저장 시점에 유저 정보와 선택된 날짜(target_date)를 함께 하드코딩으로 밀어 넣습니다
+            serializer.save(user=request.user, target_date=target_date)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-            
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class TodoDetailAPIView(APIView):
@@ -88,14 +100,27 @@ class TodoDetailAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
+    def delete(self, request, pk):
+        # 현재 로그인한 유저의 투두 중에서 해당 ID의 투두를 정확히 저격하여 가져옵니다 (보안 방어)
+        todo = get_object_or_404(Todo, id=pk, user=request.user)
+        
+        # 💥 데이터베이스에서 즉시 삭제
+        todo.delete()
+        
+        # 204 No Content 상태 코드로 프론트엔드에 "삭제 성공했다"고 신호를 반환합니다
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+def calendar(request):
+    # 캘린터 투두
+    return render(request, 'timefit/calendar.html') 
+    
 def weekly_analysis(request):
     # 주간 분석에 필요한 데이터 처리가 있다면 여기에 작성
-    return render(request, 'timefit/week.html')  # 템플릿 경로에 맞게 수정
+    return render(request, 'timefit/week.html')
 
 def monthly_analysis(request):
     # 월간 분석에 필요한 데이터 처리가 있다면 여기에 작성
-    return render(request, 'timefit/monthly.html')  # 템플릿 경로에 맞게 수정
+    return render(request, 'timefit/monthly.html')
    
 class WeeklyAnalysisAPIView(APIView):
     """
