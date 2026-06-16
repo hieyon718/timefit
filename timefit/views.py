@@ -9,6 +9,9 @@ from django.utils import timezone
 from .models import Todo, Category
 from .serializers import TodoSerializer
 from rest_framework.generics import get_object_or_404
+from datetime import timedelta
+from .models import Todo
+from .serializers import TodoSerializer
 
 # ==========================================
 # 0. 마이 페이지 뷰 (Pure Django View)
@@ -84,3 +87,94 @@ class TodoDetailAPIView(APIView):
             serializer.save() #넘겨받은 데이터를 알아서 반영저장
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+def weekly_analysis(request):
+    # 주간 분석에 필요한 데이터 처리가 있다면 여기에 작성
+    return render(request, 'timefit/week.html')  # 템플릿 경로에 맞게 수정
+
+def monthly_analysis(request):
+    # 월간 분석에 필요한 데이터 처리가 있다면 여기에 작성
+    return render(request, 'timefit/monthly.html')  # 템플릿 경로에 맞게 수정
+   
+class WeeklyAnalysisAPIView(APIView):
+    """
+    고정 주간 방식(월요일 리셋)의 분석 데이터를 제공하는 API입니다.
+    첫 번째 단계로 7열 그리드 차트용 요일별 블록 데이터를 리턴합니다.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        today = timezone.localdate()
+        
+        # 📅 1. 이번 주 월요일 날짜 계산하기
+        # today.weekday()는 월요일(0) ~ 일요일(6)을 반환합니다.
+        start_of_week = today - timedelta(days=today.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+
+        # 2. 이번 주 월요일부터 일요일까지의 현재 유저 투두 필터링
+        weekly_todos = Todo.objects.filter(
+            user=request.user,
+            target_date__range=[start_of_week, end_of_week]
+        ).order_by('created_at')
+
+        # 3. 요일별(0~6)로 블록 데이터를 분류할 주머니(딕셔너리) 준비
+        # 월(0), 화(1), 수(2), 목(3), 금(4), 토(5), 일(6)
+        weekly_blocks = {i: [] for i in range(7)}
+
+        # [2번 리포트] 카테고리별 통계 주머니
+        category_stats = {}
+
+        # 4. 조회된 투두들을 각 요일 주머니에 직렬화(JSON화)해서 적재
+        for todo in weekly_todos:
+            # 주간 차트에서는 날짜 전체보다 요일 인덱스가 핵심 기준이 됩니다.
+            weekday_index = todo.target_date.weekday() 
+            
+            # 시리얼라이저를 통과시켜 카테고리명, 컬러 등이 포함된 정제된 데이터 추출
+            serializer = TodoSerializer(todo, context={'request': request})
+            weekly_blocks[weekday_index].append(serializer.data)
+
+            # 2번 기능 연산: 완료되었고 예상 시간과 실제 시간이 모두 존재하는 경우만 집계
+            if todo.is_completed and todo.estimated_time is not None and todo.actual_time is not None:
+                cat_id = todo.category.id if todo.category else 0 # 미분류는 id=0 처리
+                cat_name = todo.category.name if todo.category else "未分類"
+                cat_color = todo.category.color if todo.category else "#bdc3c7"
+
+                if cat_id not in category_stats:
+                    category_stats[cat_id] = {
+                        "name": cat_name,
+                        "color": cat_color,
+                        "est_total": 0,
+                        "act_total": 0,
+                        "total_diff": 0,       # 오차 합산용 (실제 - 예상)
+                        "completed_count": 0   # 평균을 내기 위한 완료 타스크 수
+                    }
+                category_stats[cat_id]["est_total"] += todo.estimated_time
+                category_stats[cat_id]["act_total"] += todo.actual_time
+                category_stats[cat_id]["total_diff"] += (todo.actual_time - todo.estimated_time)
+                category_stats[cat_id]["completed_count"] += 1
+
+        # 카테고리별 최종 평균 오차(Fact) 가공
+        category_list = []
+        for cat_id, stats in category_stats.items():
+            avg_error = 0
+            if stats["completed_count"] > 0:
+                # 해당 카테고리의 한 타스크당 평균 오차 분(Minute) 계산
+                avg_error = round(stats["total_diff"] / stats["completed_count"])
+
+            category_list.append({
+                "id": cat_id,
+                "name": stats["name"],
+                "color": stats["color"],
+                "est_total": stats["est_total"],
+                "act_total": stats["act_total"],
+                "avg_error": avg_error # 예: +23(23분 초과) 또는 -5(5분 조기단축)
+            })
+
+        # 5. 최종 가공된 주간 요일별 데이터 리턴
+        return Response({
+            "start_date": start_of_week,
+            "end_date": end_of_week,
+            "weekly_blocks": weekly_blocks,
+            "category_stats": category_list #가로 막대그래프 데이터
+        }, status=status.HTTP_200_OK)

@@ -1,17 +1,25 @@
 # urls.py 수정
 from django.urls import path
-from .views import HomeView, TodoListCreateAPIView, TodoDetailAPIView, MypageView # 👈 MypageView 추가
+from .views import HomeView, TodoListCreateAPIView, TodoDetailAPIView, MypageView, WeeklyAnalysisAPIView # 👈 MypageView 추가
+from . import views  # 분석 페이지를 보여줄 뷰를 가져옵니다.
 
 urlpatterns = [
-    # 1. 메인 홈 화면 (오직 체크리스트만 존재하는 미니멀 피드)
+    # 메인 홈 화면 (오직 체크리스트만 존재하는 미니멀 피드)
     path('home/', HomeView.as_view(), name='home'),
     
-    # 2. 마이페이지 (구글 연동 관리 및 로그아웃)
+    # 마이페이지 (구글 연동 관리 및 로그아웃)
     path('mypage/', MypageView.as_view(), name='mypage'),
     
-    # 3. 데이터 통신 API
+    # 메인 체크리스트 등록
     path('api/todos/', TodoListCreateAPIView.as_view(), name='todo-list-create'),
 
-    # 4. 특정 투두 수정
+    # 메인 체크리스트 수정
     path('api/todos/<int:pk>/', TodoDetailAPIView.as_view(), name='todo-detail'),
+    
+    # 주간 분석 데이터 전용 API 주소
+    path('api/analysis/weekly/', WeeklyAnalysisAPIView.as_view(), name='analysis-weekly'),
+
+    # 분석 페이지 화면
+    path('analysis/week/', views.weekly_analysis, name='analysis_weekly'),
+    path('analysis/month/', views.monthly_analysis, name='analysis_monthly'),
 ]

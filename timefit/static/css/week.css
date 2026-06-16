@@ -1,0 +1,221 @@
+:root {
+    --bg-color: #f1f3f5;
+    --card-bg: #ffffff;
+    --text-main: #2c3e50;
+    --border-color: #e9ecef;
+    
+    /* 🧱 타임핏 블록 상태별 핵심 컬러 지정 */
+    --color-success: #2ecc71;     /* 🟢 성공: 오차 ±10% 이내 */
+    --color-underestimated: #e74c3c; /* 🔴 과소평가: 실제 시간이 훨씬 더 걸림 */
+    --color-postponed: #f1c40f;      /* 🟡 이월: 미완료 상태 */
+    --color-default-grey: #bdc3c7;   /* ⚪ 기타 완료 (기준 외) */
+}
+
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* 📁 1. 왼쪽 파일 인덱스 메뉴 레이아웃 */
+.sidebar-index {
+    width: 220px;
+    background: #2c3e50;
+    display: flex;
+    flex-direction: column;
+    padding-top: 24px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+}
+
+.sidebar-brand {
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 0 24px;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.index-tab {
+    background: none;
+    border: none;
+    color: #a0aec0;
+    font-size: 15px;
+    font-weight: bold;
+    text-align: left;
+    padding: 16px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 4px solid transparent;
+    width: 100%;
+}
+
+.index-tab:hover {
+    color: white;
+    background: #34495e;
+}
+
+/* ⚠️ 활성화된 파일 인덱스 탭 스타일 */
+.index-tab.active {
+    color: white;
+    background: #1a252f;
+    border-left: 4px solid #3498db;
+}
+
+/* 📋 메인 대시보드 콘텐츠 영역 */
+.main-content {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+    background: #f8f9fa;
+}
+
+.content-header {
+    margin-bottom: 32px;
+}
+
+.content-header h2 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+}
+
+.date-range {
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+/* 🧱 2. 주간 7열 그리드 보드 스타일 */
+.weekly-grid-container {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    margin-bottom: 24px;
+}
+
+.grid-board {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* 완벽한 7열 배치 */
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.grid-column {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 8px;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.day-header {
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: #7f8c8d;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 4px;
+}
+
+/* 개별 타스크 미니 블록 스타일 */
+.todo-block {
+    font-size: 11px;
+    color: white;
+    padding: 8px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    word-break: break-all;
+    transition: transform 0.1s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.todo-block:hover {
+    transform: scale(1.03);
+    filter: brightness(0.95);
+}
+
+/* 상태별 맵핑 클래스 */
+.block-success { background-color: var(--color-success); }
+.block-underestimated { background-color: var(--color-underestimated); }
+.block-postponed { background-color: var(--color-postponed); }
+.block-default { background-color: var(--color-default-grey); }
+
+/* 범례(Legend) 스타일 */
+.legend-container {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+    font-size: 12px;
+    color: #7f8c8d;
+    justify-content: flex-end;
+}
+
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+/* 월간 분석 임시 블라인드 처리 (추후 개발) */
+.hidden { display: none !important; }
+
+/* 📊 가로 막대 통계 레이아웃 */
+.category-stat-row {
+    margin-bottom: 20px;
+}
+.stat-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+.bar-container {
+    background: #e9ecef;
+    border-radius: 8px;
+    height: 24px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+/* 💡 客観的事実（Fact）コーチングの文章スタイル */
+.fact-coaching-box {
+    background: #f8f9fa;
+    border-left: 4px solid #2c3e50;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    font-size: 13.5px;
+    color: #34495e;
+    margin-top: 16px;
+    font-weight: 500;
+}
+.fact-highlight {
+    color: #e74c3c;
+    font-weight: bold;
+}
+.fact-success {
+    color: #2ecc71;
+    font-weight: bold;
+}

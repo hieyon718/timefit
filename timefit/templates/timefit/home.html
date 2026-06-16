@@ -21,6 +21,16 @@
         <a href="{% url 'mypage' %}" style="text-decoration: none; font-size: 20px; color: #7f8c8d; padding: 4px;">⚙️</a>
         </header>
 
+        <div class="sidebar">
+            <h3>Timefit 메뉴</h3>
+            <ul>
+                <li><a href="{% url 'home' %}">대시보드</a></li>
+                
+                <li><a href="{% url 'analysis_weekly' %}">주간 분석</a></li>
+                <li><a href="{% url 'analysis_monthly' %}">월간 분석</a></li>
+            </ul>
+        </div>
+
         <div class="input-section" id="form-container">
             <form id="todo-form">
                 {% csrf_token %}
