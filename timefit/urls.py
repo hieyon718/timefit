@@ -1,6 +1,6 @@
 # urls.py 수정
 from django.urls import path
-from .views import HomeView, TodoListCreateAPIView, TodoDetailAPIView, MypageView, WeeklyAnalysisAPIView, CalendarDataAPIView, HomeTemplateView, CategorySettingView, CategoryListAPIView, CategoryDetailAPIView # 👈 MypageView 추가
+from .views import HomeView, TodoListCreateAPIView, TodoDetailAPIView, MypageView, WeeklyAnalysisAPIView, CalendarDataAPIView, HomeTemplateView, CategorySettingView, CategoryListAPIView, CategoryDetailAPIView, UserResetTimeAPIView # 👈 MypageView 추가
 from . import views  # 분석 페이지를 보여줄 뷰를 가져옵니다.
 
 urlpatterns = [
@@ -37,6 +37,9 @@ urlpatterns = [
     # 카테고리 설정 API
     path('api/categories/', CategoryListAPIView.as_view(), name='category-list-create'),
     path('api/categories/<int:category_id>/', CategoryDetailAPIView.as_view(), name='category-detail'),
+
+    # 갱신 시간 설정 API
+    path('api/user/update-reset-time/', UserResetTimeAPIView.as_view(), name='user-reset-time-update'),
 
     # 분석 페이지 화면
     path('analysis/week/', views.weekly_analysis, name='analysis_weekly'),
