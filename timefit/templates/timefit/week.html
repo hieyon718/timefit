@@ -1,0 +1,63 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeFit - 分析ダッシュボード</title>
+
+    <link rel="stylesheet" href="{% static 'css/week.css' %}">
+    <script src="{% static 'js/week.js' %}" defer></script>
+</head>
+<body>
+
+    <nav class="sidebar-index">
+        <div class="sidebar-brand">⚡ TimeFit</div>
+        <button class="index-tab active" id="tab-weekly">週次分析</button>
+        <button class="index-tab" id="tab-monthly" onclick="alert('月次分析は現在準備中です。')">月次分析</button>
+        <a href="/home/" style="margin-top: auto; padding: 20px; color: #a0aec0; text-decoration: none; font-size: 13px; font-weight: bold; text-align: center; border-top: 1px solid #34495e;">← タスク画面に戻る</a>
+    </nav>
+
+    <main class="main-content">
+        
+        <section id="section-weekly">
+            <div class="content-header">
+                <h2>週次タイムフィットブロック</h2>
+                <div class="date-range" id="weekly-range-text">📅 期間: 加読中...</div>
+            </div>
+
+            <div class="weekly-grid-container">
+                <div class="grid-board" id="weekly-grid-board">
+                    </div>
+
+                <div class="legend-container">
+                    <div class="legend-item"><div class="legend-dot block-success"></div>成功 (予測一致)</div>
+                    <div class="legend-item"><div class="legend-dot block-underestimated"></div>過小評価 (時間超過)</div>
+                    <div class="legend-item"><div class="legend-dot block-postponed"></div>先送り (未完了)</div>
+                    <div class="legend-item"><div class="legend-dot block-default"></div>一般完了</div>
+                </div>
+            </div>
+        </section>
+
+        
+        <div class="content-header">
+            <h2>週次タイムフィットリポート</h2>
+            <div class="date-range" id="weekly-range-text">📅 期間: 加読中...</div>
+        </div>
+
+        <div class="section-card">
+            <h3 style="margin-top:0;">🧱 週次タイムフィットブロック</h3>
+            <div class="grid-board" id="weekly-grid-board"></div>
+            </div>
+
+        <div class="section-card">
+            <h3 style="margin-top:0;">⏱️ カテゴリ別 計画 vs 実績</h3>
+            <div id="category-stats-wrapper">
+                </div>
+        </div>
+
+    </main>
+
+</body>
+</html>
