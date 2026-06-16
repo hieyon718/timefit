@@ -31,17 +31,99 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 24px;
+    margin-bottom: 10px;
 }
 header h1 {
     font-size: 24px;
     margin: 0 0 4px 0;
     font-weight: 700;
 }
+
+/* ==========================================
+   🧱 오늘의 타스쿠 제목 스타일
+   ========================================== */
 .date-sub {
-    font-size: 14px;
-    color: #7f8c8d;
+    font-size: 18px;          /* h3와 유사한 최적의 서브 타이틀 크기 */
+    font-weight: 600;         /* 너무 두껍지 않으면서 선명한 굵기 */
+    color: #2c3e50;           /* 신뢰감을 주는 고급스러운 다크 네이비 블루 */
+    margin-top: 30px;              /* 상하좌우 불필요한 기본 여백 제거 */
+    padding: 2px 0 6px 0;     /* 타이틀 아래쪽에 살짝 여유를 주는 패딩 */
+    display: flex;
+    align-items: center;      /* ⚡ 이모지와 텍스트의 높낮이를 칼같이 일치 */
+    gap: 6px;                 /* 이모지와 텍스트 사이의 자연스러운 간격 */
+    letter-spacing: -0.3px;   /* 자간을 미세하게 좁혀 가독성 향상 */
 }
+
+/* ==========================================
+   🧱 사이드바 내비게이션 박스형 메뉴 스타일
+   ========================================== */
+
+/* 1. 전체 메뉴를 감싸는 유컨테이너 (ul 태그) */
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0;
+    display: flex;          /* 👈 옆으로 정렬하는 핵심 스위치 */
+    gap: 5px;              /* 버튼 사이의 간격 */
+    width: 100%;
+}
+
+/* 2. 각 리스트 아이템의 너비를 균등하게 배분 */
+.sidebar ul li {
+    flex: 1;
+}
+
+/* 3. 기본 박스형 메뉴 버튼 공통 디자인 */
+.sidebar ul li a {
+    display: block;
+    text-align: center;
+    padding: 8px 8px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* --- 🎨 기능별 맞춤형 컬러 지정 --- */
+
+/* [기본] 카렌다 버튼 (차분한 회색 톤) */
+.sidebar ul li:nth-child(1) a {
+    background-color: #f1f2f6;
+    color: #57606f;
+    border: 1px solid #ced6e0;
+}
+.sidebar ul li:nth-child(1) a:hover {
+    background-color: #e4e7ed;
+}
+
+/* [노랑] 주차 분석 버튼 (투두 수정모드의 부드러운 노란색 계열) */
+.sidebar ul li:nth-child(2) a {
+    background-color: #f1c40f; /* 🟡 Warm Yellow */
+    color: #ffffff;
+    border: 1px solid #f39c12;
+}
+.sidebar ul li:nth-child(2) a:hover {
+    background-color: #f39c12; /* 호버 시 약간 짙어짐 */
+    transform: translateY(-1px);
+}
+
+/* [주황] 월차 분석 버튼 (선명한 오렌지색 계열) */
+.sidebar ul li:nth-child(3) a {
+    background-color: #f1c40f; /* 🟡 Warm Yellow */
+    color: #ffffff;
+    border: 1px solid #f39c12;
+}
+.sidebar ul li:nth-child(3) a:hover {
+    background-color: #f39c12; /* 호버 시 약간 짙어짐 */
+    transform: translateY(-1px);
+}
+
+.date-navigator {
+    margin-bottom: 5px;
+}
+
 /* 입력 폼 기본 스타일 */
 .input-section {
     background: var(--bg-color);

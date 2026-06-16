@@ -1,26 +1,43 @@
-const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-document.getElementById('current-date').innerText = `📅 ${new Date().toLocaleDateString('ja-JP', options)}`;
+// 💡 1. 글로벌 상태 관리 변수 (파일 로드 즉시 메모리에 안전하게 생성됨)
+let currentTargetTodoId = null; 
+let editModeTodoId = null;      
+let currentSelectedDate = new Date();
+let currentDeleteTodoId = null; // 🗑️ 삭제할 투두 ID 임시 보관함
 
-// 💡 글로벌 상태 관리 변수 추가
-let currentTargetTodoId = null; // 완료 체크 모달용 타겟 ID
-let editModeTodoId = null;      // ✏️ 현재 수정 모드인 투두 ID (null 이면 추가 모드)
+// 2. 날짜를 'YYYY-MM-DD' 규격 문자열로 바꾸는 헬퍼 함수
+function formatDateString(dateObj) {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
 
-// 1. Todo 목록 로드 (Read)
+// 3. 화면 상단에 일본어 날짜 구조로 뿌려주는 렌더링 함수
+function updateDateDisplay() {
+    const options = { weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit' };
+    const displayTag = document.getElementById('current-date-display');
+    if (displayTag) {
+        displayTag.innerText = currentSelectedDate.toLocaleDateString('ja-JP', options);
+    }
+}
+
+// 4. Todo 목록 로드 (Read)
 async function loadTodos() {
+    const dateParam = formatDateString(currentSelectedDate);
     try {
-        const response = await fetch('/api/todos/');
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
+        const response = await fetch(`/api/todos/?date=${dateParam}`);
+        const todos = await response.json();
         
-        const todoList = document.getElementById('todo-list');
-        todoList.innerHTML = ''; 
+        const listContainer = document.getElementById('todo-list');
+        if (!listContainer) return;
+        listContainer.innerHTML = '';
 
-        if (data.length === 0) {
-            todoList.innerHTML = `<li style="text-align:center; color:#95a5a6; padding:20px;">今日のタスクはすべて完了、または登録されていません。</li>`;
+        if (todos.length === 0) {
+            listContainer.innerHTML = `<p style="text-align:center; color:#7f8c8d; font-size:14px; padding:20px 0;">この日のタスクはありません。</p>`;
             return;
         }
 
-        data.forEach(todo => {
+        todos.forEach(todo => {
             const li = document.createElement('li');
             li.className = `todo-item ${todo.is_completed ? 'is-completed' : ''}`;
             
@@ -32,7 +49,6 @@ async function loadTodos() {
                 timeInfoHtml += `<div style="font-weight:bold; color:#2ecc71;">実績: ${todo.actual_time}分</div>`;
             }
 
-            // 오른쪽 끝에 연필(✏️) 이모지 버튼 배치 및 데이터 하드코딩 바인딩
             li.innerHTML = `
                 <input type="checkbox" class="todo-checkbox" data-id="${todo.id}" ${todo.is_completed ? 'checked' : ''}>
                 <span class="category-badge" style="background-color: ${todo.category_color || '#bdc3c7'}">
@@ -40,22 +56,34 @@ async function loadTodos() {
                 </span>
                 <div class="todo-content">${todo.content}</div>
                 <div class="todo-time-info">${timeInfoHtml}</div>
-                <button class="edit-trigger-btn" 
-                        data-id="${todo.id}" 
-                        data-content="${todo.content}" 
-                        data-category="${todo.category || ''}" 
-                        data-estimated="${todo.estimated_time || ''}">✏️</button>
+                
+                <div class="todo-actions-btns" style="display: flex; gap: 4px;">
+                    <button class="edit-trigger-btn" 
+                            data-id="${todo.id}" 
+                            data-content="${todo.content}" 
+                            data-category="${todo.category || ''}" 
+                            data-estimated="${todo.estimated_time || ''}">✏️</button>
+                    <button class="delete-trigger-btn" data-id="${todo.id}" style="background:none; border:none; cursor:pointer;">🗑️</button>
+                </div>
             `;
-            todoList.appendChild(li);
+            listContainer.appendChild(li);
         });
 
-        // 이벤트 바인딩 재설정
+
+
+        // 리스트 동적 생성 후 이벤트 바인딩
         document.querySelectorAll('.todo-checkbox').forEach(cb => {
             cb.addEventListener('change', handleCheckboxChange);
         });
 
+        //수정 이벤트 생성
         document.querySelectorAll('.edit-trigger-btn').forEach(btn => {
             btn.addEventListener('click', handleEditTrigger);
+        });
+
+        //삭제 이벤트 생성
+        document.querySelectorAll('.delete-trigger-btn').forEach(btn => {
+            btn.addEventListener('click', handleDeleteTrigger);
         });
 
     } catch (error) {
@@ -63,93 +91,67 @@ async function loadTodos() {
     }
 }
 
-// 2. ✏️ 연필 버튼 클릭 시 -> 상단 입력창을 수정 폼으로 세팅하는 핸들러
+// 5. 연필 버튼 핸들러
 function handleEditTrigger(e) {
     const btn = e.currentTarget;
-    
-    // 데이터 속성 추출
     editModeTodoId = btn.dataset.id;
-    const currentContent = btn.dataset.content;
-    const currentCategory = btn.dataset.category;
-    const currentEstimated = btn.dataset.estimated;
+    document.getElementById('content-input').value = btn.dataset.content;
+    document.getElementById('category-select').value = btn.dataset.category;
+    document.getElementById('time-input').value = btn.dataset.estimated;
 
-    // 상단 인풋창에 기존 데이터 강제 주입
-    document.getElementById('content-input').value = currentContent;
-    document.getElementById('category-select').value = currentCategory;
-    document.getElementById('time-input').value = currentEstimated;
-
-    // UI 상태 변경 (노란 배경색 도입 + 버튼 텍스트 변경)
     document.getElementById('form-container').classList.add('edit-active');
     const submitBtn = document.getElementById('form-submit-btn');
     submitBtn.innerText = 'タスクを変更';
-    submitBtn.classList.add('edit-btn-style');
-    
-    // 화면을 부드럽게 상단 입력창으로 스크롤 이동
-    document.getElementById('form-container').scrollIntoView({ behavior: 'smooth' });
 }
 
-// 수정 완료 후 입력창을 원래대로 복구하는 헬퍼 함수
 function resetFormToCreateMode() {
     editModeTodoId = null;
     document.getElementById('content-input').value = '';
     document.getElementById('time-input').value = '';
-    
     document.getElementById('form-container').classList.remove('edit-active');
-    const submitBtn = document.getElementById('form-submit-btn');
-    submitBtn.innerText = 'タスクを追加';
-    submitBtn.classList.remove('edit-btn-style');
+    document.getElementById('form-submit-btn').innerText = 'タスクを追加';
 }
 
-// 3. 통합 Form 제출(Submit) 핸들러 [등록(Create) 혹은 수정(Update)]
-document.getElementById('todo-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+// ✏️ 3-1. 휴지통 버튼을 눌렀을 때 삭제 모달을 여는 핸들러
+function handleDeleteTrigger(e) {
+    const btn = e.currentTarget;
+    currentDeleteTodoId = btn.dataset.id; // 삭제 타겟 ID 세팅
+    document.getElementById('delete-modal').style.display = 'flex'; // 모달 열기
+}
 
-    const categoryId = document.getElementById('category-select').value;
-    const content = document.getElementById('content-input').value;
-    const estimatedTime = document.getElementById('time-input').value;
-
-    const payload = {
-        category: categoryId ? parseInt(categoryId) : null,
-        content: content,
-        estimated_time: estimatedTime ? parseInt(estimatedTime) : null
-    };
-
-    let url = '/api/todos/';
-    let method = 'POST';
-
-    // 💡 만약 editModeTodoId에 값이 있다면 '수정 모드'로 판별하여 분기
-    if (editModeTodoId !== null) {
-        url = `/api/todos/${editModeTodoId}/`;
-        method = 'PATCH';
-    }
+// ✏️ 3-2. 백엔드에 진짜 DELETE 신호를 보내는 함수
+async function deleteTodoStatus() {
+    if (!currentDeleteTodoId) return;
 
     try {
-        const response = await fetch(url, {
-            method: method,
+        const response = await fetch(`/api/todos/${currentDeleteTodoId}/`, {
+            method: 'DELETE',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify(payload)
+                'X-CSRFToken': getCookie('csrftoken') // Django CSRF 검증 패스용
+            }
         });
 
         if (response.ok) {
-            resetFormToCreateMode(); // 폼 원상복구
-            loadTodos(); // 리스트 새로고침
+            closeDeleteModal(); // 모달 닫기
+            loadTodos();        // 화면 리스트 리로드 (사라짐 효과)
         } else {
-            alert('処理に失敗しました。');
+            alert('タスクの削除に失敗しました。');
         }
     } catch (error) {
-        console.error('Error handling form submit:', error);
+        console.error('Error deleting todo:', error);
     }
-});
+}
 
-// 4. 체크박스 핸들러
+// ✏️ 3-3. 삭제 모달 청소 및 닫기 헬퍼 함수
+function closeDeleteModal() {
+    document.getElementById('delete-modal').style.display = 'none';
+    currentDeleteTodoId = null;
+}
+
+// 6. 체크박스 및 모달 관련 기존 함수들
 function handleCheckboxChange(e) {
     const todoId = e.target.dataset.id;
-    const isChecked = e.target.checked;
-
-    if (isChecked) {
+    if (e.target.checked) {
         currentTargetTodoId = todoId;
         document.getElementById('actual-time-input').value = '';
         document.getElementById('time-modal').style.display = 'flex';
@@ -158,7 +160,6 @@ function handleCheckboxChange(e) {
     }
 }
 
-// 5. 체크박스 상태 업데이트 처리 전용 함수
 async function updateTodoStatus(todoId, isCompleted, actualTime) {
     const payload = { is_completed: isCompleted, actual_time: actualTime };
     try {
@@ -173,8 +174,6 @@ async function updateTodoStatus(todoId, isCompleted, actualTime) {
         if (response.ok) {
             closeModal();
             loadTodos();
-        } else {
-            alert('ステータスの更新に失敗しました。');
         }
     } catch (error) {
         console.error('Error updating todo status:', error);
@@ -185,16 +184,6 @@ function closeModal() {
     document.getElementById('time-modal').style.display = 'none';
     currentTargetTodoId = null;
 }
-
-document.getElementById('btn-modal-submit').addEventListener('click', () => {
-    const actualTimeVal = document.getElementById('actual-time-input').value;
-    const actualTime = actualTimeVal !== '' ? parseInt(actualTimeVal) : 0;
-    if (currentTargetTodoId) updateTodoStatus(currentTargetTodoId, true, actualTime);
-});
-
-document.getElementById('btn-modal-skip').addEventListener('click', () => {
-    if (currentTargetTodoId) updateTodoStatus(currentTargetTodoId, true, null);
-});
 
 function getCookie(name) {
     let cookieValue = null;
@@ -211,4 +200,108 @@ function getCookie(name) {
     return cookieValue;
 }
 
-loadTodos();
+
+// ==========================================
+// 🛡️ [핵심 교정] 모든 HTML 태그 조립이 끝난 직후 작동할 메인 스위치
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // ① 기존에 에러를 뿜던 하드코딩 구문을 안전하게 변경
+    const currentDateTag = document.getElementById('current-date');
+    if (currentDateTag) {
+        currentDateTag.innerText = "⚡ 今日のタスク";
+    }
+
+    // ② 화살표 버튼 이벤트 리스너 바인딩 (이 시점엔 HTML 버튼들이 무조건 존재하므로 100% 성공)
+    const btnPrev = document.getElementById('btn-prev-date');
+    const btnNext = document.getElementById('btn-next-date');
+    
+    if (btnPrev && btnNext) {
+        btnPrev.addEventListener('click', () => {
+            currentSelectedDate.setDate(currentSelectedDate.getDate() - 1);
+            updateDateDisplay();
+            loadTodos();
+        });
+
+        btnNext.addEventListener('click', () => {
+            currentSelectedDate.setDate(currentSelectedDate.getDate() + 1);
+            updateDateDisplay();
+            loadTodos();
+        });
+    }
+
+    // ③ 통합 등록/수정 폼 이벤트 바인딩
+    const todoForm = document.getElementById('todo-form');
+    if (todoForm) {
+        todoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const categoryId = document.getElementById('category-select').value;
+            const content = document.getElementById('content-input').value;
+            const estimatedTime = document.getElementById('time-input').value;
+
+            const payload = {
+                category: categoryId,
+                content: content,
+                estimated_time: estimatedTime ? parseInt(estimatedTime) : null,
+                target_date: formatDateString(currentSelectedDate)
+            };
+
+            let url = '/api/todos/';
+            let method = 'POST';
+            if (editModeTodoId !== null) {
+                url = `/api/todos/${editModeTodoId}/`;
+                method = 'PATCH';
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    resetFormToCreateMode();
+                    loadTodos();
+                }
+            } catch (error) {
+                console.error('Error saving todo:', error);
+            }
+        });
+    }
+
+    // ④ 모달 버튼 이벤트 바인딩
+    document.getElementById('btn-modal-submit').addEventListener('click', () => {
+        const actualTimeVal = document.getElementById('actual-time-input').value;
+        const actualTime = actualTimeVal !== '' ? parseInt(actualTimeVal) : 0;
+        if (currentTargetTodoId) updateTodoStatus(currentTargetTodoId, true, actualTime);
+    });
+
+    document.getElementById('btn-modal-skip').addEventListener('click', () => {
+        if (currentTargetTodoId) updateTodoStatus(currentTargetTodoId, true, null);
+    });
+
+    // 모달 내부 [삭제하는(削除する)] 버튼 클릭 시
+    document.getElementById('btn-delete-submit').addEventListener('click', deleteTodoStatus);
+
+    // 모달 내부 [취소(キャンセル)] 버튼 클릭 시
+    document.getElementById('btn-delete-cancel').addEventListener('click', closeDeleteModal);
+
+    // ⑤ 첫 화면 진입 시 날짜 텍스트 업데이트 및 투두 목록 불러오기 실행
+    updateDateDisplay();
+    loadTodos();
+
+});
+
+window.changeDate = function(offset) {
+    // 1. 글로벌 날짜 상태 변경
+    currentSelectedDate.setDate(currentSelectedDate.getDate() + offset);
+    
+    // 2. 상단 텍스트 새로고침
+    updateDateDisplay();
+    
+    // 3. 백엔드 통신 및 리스트 리로드
+    loadTodos();
+};
