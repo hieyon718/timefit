@@ -1,0 +1,86 @@
+/* timefit/static/css/calendar.css */
+
+.calendar-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background: #f8f9fa;
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.day-of-week {
+    text-align: center;
+    font-weight: bold;
+    padding: 10px 0;
+    background: #2c3e50;
+    color: white;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.calendar-cell {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    min-height: 110px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.calendar-cell:hover {
+    border-color: #3498db;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    transform: translateY(-2px);
+}
+
+.cell-number {
+    font-size: 12px;
+    font-weight: bold;
+    color: #4a5568;
+    margin-bottom: 6px;
+}
+
+.calendar-mini-todo {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 6px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; /* 한 줄 컷 규칙 */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: all 0.15s ease;
+}
+
+.mini-todo-incomplete {
+    background-color: #ffffff;
+    color: #2d3748;
+}
+.mini-todo-completed {
+    text-decoration: none;
+    opacity: 0.75; /* 살짝 투명도를 주어 완결된 느낌 강화 */
+}
+
+.cell-empty {
+    background: #f7fafc;
+    cursor: default;
+    pointer-events: none;
+}
