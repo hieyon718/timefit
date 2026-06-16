@@ -15,7 +15,7 @@ from .serializers import TodoSerializer
 from django.utils.dateparse import parse_date
 import calendar as cal
 from django.views.generic import TemplateView
-from .models import Category
+from .models import Category, Todo
 
 # ==========================================
 # 0. 마이 페이지 뷰 (Pure Django View)
@@ -37,6 +37,9 @@ class HomeView(LoginRequiredMixin, View):
     웹 브라우저 접속 시 미니멀한 HTML 홈 화면 프레임만 리턴합니다.
     """
     def get(self, request):
+        # 🔑 1. [이월 엔진 기동] 유저가 홈 화면에 발을 들이는 순간 과거 미완료 투두 일괄 갱신
+        # LoginRequiredMixin 덕분에 request.user는 무조건 로그인된 유저임이 보장됩니다.
+        Todo.migrate_incomplete_todos(request.user)
         # 셀렉트박스에 바인딩할 카테고리 목록만 템플릿에 전달
         categories = Category.objects.filter(user=request.user)
         return render(request, 'timefit/home.html', {'categories': categories})
