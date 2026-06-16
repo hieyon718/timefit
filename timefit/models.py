@@ -180,3 +180,38 @@ class Todo(models.Model):
     def __str__(self):
         status = "【完了】" if self.is_completed else "【未完了】"
         return f"{status} {self.content[:20]}"
+    
+    @classmethod
+    def migrate_incomplete_todos(cls, user):
+        """
+        유저가 웹 진입 시 미완료된 과거의 태스크들을 
+        유저 모델에 설정된 reset_time(갱신 기준 시간)에 맞춰 오늘 날짜로 자동 이월합니다.
+        """
+        from django.utils import timezone
+        from datetime import datetime, timedelta
+
+        # 1. 유저 모델에 정의된 커스텀 기준 시간 획득 (예: datetime.time(0, 0))
+        day_reset_time = user.reset_time 
+        
+        # 2. 현재 서버 시간 및 유저 기준 '현재 유효한 날짜' 연산
+        now = timezone.localtime(timezone.now())
+        current_time = now.time()
+        
+        # 💡 현재 시각이 유저가 커스텀 설정한 reset_time보다 이전이라면, 
+        # 달력상 날짜는 오늘이어도 이 유저의 생활 패턴상으로는 아직 '어제'로 취급해야 합니다.
+        if current_time < day_reset_time:
+            app_today = now.date() - timedelta(days=1)
+        else:
+            app_today = now.date()
+
+        # 3. 이월 타겟 소팅: 미완료(is_completed=False) 상태이면서 
+        #    예정일(target_date)이 앱 기준 오늘(app_today)보다 과거인 할 일들만 필터링
+        incomplete_past_todos = cls.objects.filter(
+            user=user,
+            is_completed=False,
+            target_date__lt=app_today
+        )
+
+        # 4. 🚀 단 한 번의 단일 데이터베이스 쿼리로 일괄 업데이트 실행 (안전성 최우선)
+        if incomplete_past_todos.exists():
+            incomplete_past_todos.update(target_date=app_today)
