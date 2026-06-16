@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeFit - カテゴリ設定</title>
+    <link rel="stylesheet" href="{% static 'css/category.css' %}"> 
+
+    <script src="{% static 'js/category.js' %}" defer></script>
+</head>
+<body>
+
+<div class="app-container">
+    <header style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+        <a href="{% url 'home' %}" class="back-btn" style="text-decoration: none; font-size: 20px; color: #2c3e50; font-weight: bold;">←</a>
+        <h1 style="font-size: 20px; margin: 0; font-weight: 700; color: #2c3e50;">カテゴリ設定</h1>
+    </header>
+
+    <div class="form-container" id="category-form-container" style="background: #f8fafc; padding: 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 24px;">
+        <form id="category-core-form">
+            {% csrf_token %}
+            <label style="font-size: 13px; font-weight: bold; color: #4a5568; display: block; margin-bottom: 8px;">カテゴリの追加・編集</label>
+            
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 14px;">
+                <select id="category-color-select" required
+                        style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background-color: #ffffff; cursor: pointer; min-width: 130px; font-weight: bold; color: #2c3e50;">
+                    <option value="#3498db" style="color: #3498db;">🔵 ブルー</option>
+                    <option value="#e67e22" style="color: #e67e22;">🟠 オレンジ</option>
+                    <option value="#2ecc71" style="color: #2ecc71;">🟢 グリーン</option>
+                    <option value="#f1c40f" style="color: #f1c40f;">🟡 イエロー</option>
+                    <option value="#e74c3c" style="color: #e74c3c;">🔴 レッド</option>
+                    <option value="#9b59b6" style="color: #9b59b6;">🟣 パープル</option>
+                    <option value="#fda7df" style="color: #fda7df;">🌸 ピンク</option>
+                    <option value="#1abc9c" style="color: #1abc9c;">💎 ミント</option>
+                    <option value="#2c3e50" style="color: #2c3e50;">⚫ ネイビー</option>
+                    <option value="#7f8c8d" style="color: #7f8c8d;">⚪ グレー</option>
+                </select>
+
+                <input type="text" id="category-name-input" placeholder="カテゴリ名を入力" required 
+                       style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+            </div>
+
+            <button type="submit" id="category-submit-btn" style="width: 100%; padding: 10px; background: #2c3e50; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px;">カテゴリを追加</button>
+        </form>
+    </div>
+
+    <h3 style="font-size: 15px; color: #2c3e50; margin-bottom: 12px; font-weight: bold;">カテゴリリスト</h3>
+    <ul id="category-list" style="list-style: none; padding: 0; margin: 0;">
+        </ul>
+</div>
+
+<div id="delete-cat-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
+    <div style="background: white; padding: 22px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <p style="font-size: 15px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; line-height: 1.5;">
+            このカテゴリを削除しますか？
+        </p>
+        <p style="font-size: 13px; color: #e74c3c; background: #fff5f5; padding: 8px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; line-height: 1.4;">
+            ⚠️ 関連していたタスクのカテゴリが<br>'未設定’に変更されます。
+        </p>
+        <div style="display: flex; gap: 8px;">
+            <button id="btn-modal-cancel" style="flex: 1; padding: 10px; background: #eeecf0; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #4a5568;">キャンセル</button>
+            <button id="btn-modal-delete" style="flex: 1; padding: 10px; background: #e74c3c; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">削除する</button>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/category-setting.js' %}" defer></script>
+</body>
+</html>

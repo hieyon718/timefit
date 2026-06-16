@@ -18,11 +18,14 @@
 <body>
 
     <div class="app-container">
-        <header style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div>
-            <h1 style="font-size: 24px; margin: 0 0 4px 0; font-weight: 700;">TimeFit</h1>
-        </div>
-        <a href="{% url 'mypage' %}" style="text-decoration: none; font-size: 20px; color: #7f8c8d; padding: 4px;">👤</a>
+        <header>
+            <div>
+                <h1 style="font-size: 24px; margin: 0 0 4px 0; font-weight: 700;">TimeFit</h1>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'mypage' %}" style="text-decoration: none; font-size: 20px; color: #7f8c8d; padding: 4px;">👤</a>
+                <a href="{% url 'category_setting' %}" style="text-decoration: none; font-size: 20px; color: #7f8c8d; padding: 4px;">⚙️</a>
+            </div>
         </header>
 
         <div class="sidebar">

@@ -15,6 +15,7 @@ from .serializers import TodoSerializer
 from django.utils.dateparse import parse_date
 import calendar as cal
 from django.views.generic import TemplateView
+from .models import Category
 
 # ==========================================
 # 0. 마이 페이지 뷰 (Pure Django View)
@@ -178,6 +179,83 @@ class CalendarDataAPIView(APIView):
             "month": month,
             "todos_by_date": calendar_data
         }, status=status.HTTP_200_OK)
+    
+# ⚙️ [1] 카테고리 설정 페이지 이동 뷰 (GET)
+class CategorySettingView(View):
+    def get(self, request):
+        # 단순히 만들어둔 templates/category-setting.html 파일을 렌더링하여 화면을 띄웁니다.
+        return render(request, 'timefit/category.html')
+    
+# 📊 [2] 카테고리 데이터 가공 및 CRUD 처리 API 뷰
+class CategoryListAPIView(APIView):
+    permission_classes = [IsAuthenticated] # 로그인한 회원만 데이터 접근 허용
+
+    # 📥 현재 보관 중인 카테고리 목록 조회 (Read)
+    def get(self, request):
+        # 현재 로그인한 유저의 카테고리만 필터링하여 가져옵니다.
+        categories = Category.objects.filter(user=request.user).order_by('id')
+        
+        # 스크립트(JS)가 바로 읽을 수 있도록 JSON 배열 형태로 가공합니다.
+        data = [
+            {
+                "id": cat.id,
+                "name": cat.name,
+                "color": cat.color
+            } for cat in categories
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
+    # 📤 새로운 카테고리 추가 생성 (Create)
+    def post(self, request):
+        name = request.data.get('name')
+        color = request.data.get('color')
+
+        if not name or not color:
+            return Response({"error": "名前とカラーは必須です。"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 데이터베이스에 새 카테고리 개체 결성
+        new_cat = Category.objects.create(
+            user=request.user,
+            name=name,
+            color=color
+        )
+        return Response({"message": "成功", "id": new_cat.id}, status=status.HTTP_201_CREATED)
+
+
+# 🛠️ [3] 개별 카테고리 수정 및 삭제 API 뷰
+class CategoryDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    # ✏️ 기존 카테고리 내용 수정 (Update / PATCH)
+    def patch(self, request, category_id):
+        try:
+            # 타인 계정의 카테고리를 위조 수정하지 못하도록 user 조건 검증 필수
+            category = Category.objects.get(id=category_id, user=request.user)
+        except Category.DoesNotExist:
+            return Response({"error": "該当カテゴリが見つかりません。"}, status=status.HTTP_404_NOT_FOUND)
+
+        # 넘어온 데이터가 있을 때만 필드 업데이트
+        if 'name' in request.data:
+            category.name = request.data['name']
+        if 'color' in request.data:
+            category.color = request.data['color']
+            
+        category.save()
+        return Response({"message": "修正完了"}, status=status.HTTP_200_OK)
+
+    # 🗑️ 카테고리 제거 (Delete)
+    def delete(self, request, category_id):
+        try:
+            category = Category.objects.get(id=category_id, user=request.user)
+        except Category.DoesNotExist:
+            return Response({"error": "該当カテゴリが見つかりません。"}, status=status.HTTP_404_NOT_FOUND)
+
+        # 💡 [자동 연동 장치]: 장고의 ForeignKey 구조상 
+        # Todo 모델의 category 필드가 'on_delete=models.SET_NULL'로 설정되어 있다면
+        # 여기서 카테고리를 지우는 즉시 해당 카테고리가 엮여있던 할 일들은 
+        # 자동으로 '카테고리 미설정(Null)' 상태로 안전하게 전환됩니다.
+        category.delete()
+        return Response({"message": "削除完了"}, status=status.HTTP_204_NO_CONTENT)
     
 def weekly_analysis(request):
     # 주간 분석에 필요한 데이터 처리가 있다면 여기에 작성

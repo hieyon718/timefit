@@ -1,6 +1,6 @@
 # urls.py 수정
 from django.urls import path
-from .views import HomeView, TodoListCreateAPIView, TodoDetailAPIView, MypageView, WeeklyAnalysisAPIView, CalendarDataAPIView, HomeTemplateView # 👈 MypageView 추가
+from .views import HomeView, TodoListCreateAPIView, TodoDetailAPIView, MypageView, WeeklyAnalysisAPIView, CalendarDataAPIView, HomeTemplateView, CategorySettingView, CategoryListAPIView, CategoryDetailAPIView # 👈 MypageView 추가
 from . import views  # 분석 페이지를 보여줄 뷰를 가져옵니다.
 
 urlpatterns = [
@@ -30,6 +30,13 @@ urlpatterns = [
 
     # 캘린더 데이터 API
     path('api/calendar/data/', CalendarDataAPIView.as_view(), name='calendar-data'),
+
+    # 카테고리 설정 화면
+    path('category/setting/', CategorySettingView.as_view(), name='category_setting'),
+
+    # 카테고리 설정 API
+    path('api/categories/', CategoryListAPIView.as_view(), name='category-list-create'),
+    path('api/categories/<int:category_id>/', CategoryDetailAPIView.as_view(), name='category-detail'),
 
     # 분석 페이지 화면
     path('analysis/week/', views.weekly_analysis, name='analysis_weekly'),

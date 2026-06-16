@@ -29,14 +29,36 @@ body {
 }
 header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    justify-content: space-between; /* 👈 이제 로고 디브와 아이콘 주머니가 양 끝으로 완벽히 찢어집니다 */
+    align-items: center; /* 💡 flex-start 대신 center로 주면 타이틀과 아이콘 세로 높이가 깔끔하게 맞습니다 */
     margin-bottom: 10px;
 }
+
 header h1 {
     font-size: 24px;
-    margin: 0 0 4px 0;
+    margin: 0;
     font-weight: 700;
+}
+
+/* 🔑 [신규 추가] 우측 단추들을 가로로 나란히 밀착시키는 정렬 엔진 */
+.header-actions {
+    display: flex;
+    gap: 8px; /* 👤 단추와 ⚙️ 단추 사이의 은은한 간격 설정 */
+    align-items: center;
+}
+
+/* 아이콘 링크 공통 디자인 청소 */
+.header-actions a {
+    text-decoration: none;
+    font-size: 20px;
+    color: #7f8c8d;
+    padding: 4px;
+    transition: color 0.15s ease; /* 마우스 올렸을 때 부드러운 트랜지션 */
+}
+
+/* 마우스 호버 시 다크하게 강조되는 효과 */
+.header-actions a:hover {
+    color: #2c3e50;
 }
 
 /* ==========================================
