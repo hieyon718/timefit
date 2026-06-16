@@ -13,6 +13,8 @@ from datetime import timedelta
 from .models import Todo
 from .serializers import TodoSerializer
 from django.utils.dateparse import parse_date
+import calendar as cal
+from django.views.generic import TemplateView
 
 # ==========================================
 # 0. 마이 페이지 뷰 (Pure Django View)
@@ -38,9 +40,25 @@ class HomeView(LoginRequiredMixin, View):
         categories = Category.objects.filter(user=request.user)
         return render(request, 'timefit/home.html', {'categories': categories})
 
+# ==========================================
+# 1.2. 날짜 값 있는 화면  뷰 (Pure Django View)
+# ==========================================
+class HomeTemplateView(TemplateView):
+    template_name = 'timefit/home.html'
+
+    # 장고 템플릿으로 데이터를 넘겨주는 메서드를 오버라이딩합니다
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # urls.py에서 <str:date_str> 규칙을 통해 주소창에서 숫자를 빼내왔는지 검사합니다
+        url_date = self.kwargs.get('date_str', '')
+        
+        # HTML 코드가 읽을 수 있도록 'init_date'라는 이름의 주머니에 넣어 전달합니다
+        context['init_date'] = url_date
+        return context
 
 # ==========================================
-# 2. 데이터 전용 뷰 (DRF APIView) -> 웹 비동기 & 추후 모바일 앱 공용
+# 2. 투두 CR 뷰 (DRF APIView) -> 웹 비동기 & 추후 모바일 앱 공용
 # ==========================================
 class TodoListCreateAPIView(APIView):
     """
@@ -79,6 +97,9 @@ class TodoListCreateAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# ==========================================
+# 2. 투두 UD 뷰 (DRF APIView) -> 웹 비동기 & 추후 모바일 앱 공용
+# ==========================================
 class TodoDetailAPIView(APIView):
     """
     특정 할 일의 완료 상태 및 실제 소요 시간을 업데이트(Update)하는 API입니다.
@@ -113,6 +134,50 @@ class TodoDetailAPIView(APIView):
 def calendar(request):
     # 캘린터 투두
     return render(request, 'timefit/calendar.html') 
+
+# ==========================================
+# 2. 투두 캘린더 뷰 (DRF APIView) -> 웹 비동기 & 추후 모바일 앱 공용
+# ==========================================
+class CalendarDataAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        today = timezone.localdate()
+        # 쿼리 파라미터로 연/월이 안 넘어오면 이번 달을 기본값으로 지정
+        year = int(request.query_params.get('year', today.year))
+        month = int(request.query_params.get('month', today.month))
+
+        # 해당 월의 시작일과 마지막일 계산
+        _, last_day = cal.monthrange(year, month)
+        start_date = timezone.datetime(year, month, 1).date()
+        end_date = timezone.datetime(year, month, last_day).date()
+
+        # 데이터베이스에서 유저의 한 달 치 투두 싹 긁어오기
+        todos = Todo.objects.filter(
+            user=request.user,
+            target_date__range=[start_date, end_date]
+        ).order_by('created_at')
+
+        # 날짜별로 그루핑할 주머니 생성
+        calendar_data = {}
+        for todo in todos:
+            date_str = todo.target_date.strftime('%Y-%m-%d')
+            if date_str not in calendar_data:
+                calendar_data[date_str] = []
+            
+            calendar_data[date_str].append({
+                "id": todo.id,
+                "content": todo.content,
+                "is_completed": todo.is_completed,
+                # 🎨 카테고리 고유 컬러 코드를 프론트엔드로 함께 전송 (없으면 기본 회색 #bdc3c7)
+                "category_color": todo.category_color if hasattr(todo, 'category_color') else (todo.category.color if todo.category else '#bdc3c7')
+            })
+
+        return Response({
+            "year": year,
+            "month": month,
+            "todos_by_date": calendar_data
+        }, status=status.HTTP_200_OK)
     
 def weekly_analysis(request):
     # 주간 분석에 필요한 데이터 처리가 있다면 여기에 작성

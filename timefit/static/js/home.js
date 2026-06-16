@@ -1,8 +1,18 @@
-// 💡 1. 글로벌 상태 관리 변수 (파일 로드 즉시 메모리에 안전하게 생성됨)
 let currentTargetTodoId = null; 
 let editModeTodoId = null;      
-let currentSelectedDate = new Date();
 let currentDeleteTodoId = null; // 🗑️ 삭제할 투두 ID 임시 보관함
+
+// 🔑 [완벽 방어 스위치] 서버가 보내준 날짜가 '진짜 유효한 값'일 때만 그 날짜를 쓰고, 아니면 오늘(new Date())을 씁니다.
+let currentSelectedDate = new Date(); // 우선 오늘 날짜를 기본 세팅으로 잡아두고
+
+if (window.SERVER_INITIAL_DATE && window.SERVER_INITIAL_DATE.trim() !== "") {
+    const parsedDate = new Date(window.SERVER_INITIAL_DATE);
+    
+    // 이 날짜가 망가진 글자(Invalid Date)가 아닐 때만 글로벌 메모리를 덮어씁니다.
+    if (!isNaN(parsedDate.getTime())) {
+        currentSelectedDate = parsedDate;
+    }
+}
 
 // 2. 날짜를 'YYYY-MM-DD' 규격 문자열로 바꾸는 헬퍼 함수
 function formatDateString(dateObj) {

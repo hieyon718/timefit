@@ -1,0 +1,36 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeFit - カレンダー</title>
+    <link rel="stylesheet" href="{% static 'css/home.css' %}"> 
+    <link rel="stylesheet" href="{% static 'css/calendar.css' %}">
+
+    <script src="{% static 'js/calendar.js' %}" defer></script>
+</head>
+<body>
+
+    <div class="app-container calendar-container">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div>
+                <h1 style="font-size: 24px; margin: 0 0 4px 0; font-weight: 700;">TimeFit</h1>
+            </div>
+            <a href="{% url 'home' %}" style="text-decoration: none; font-size: 20px; color: #7f8c8d; padding: 4px;">🏠</a>
+        </header>
+
+         <div class="date-sub">📅 月間カレンダー</div>
+
+        <div class="calendar-header">
+            <button id="prev-month-btn" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #2c3e50;">◀</button>
+            <h2 id="month-title" style="font-size: 18px; margin: 0; color: #2c3e50;">2026年 06月</h2>
+            <button id="next-month-btn" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #2c3e50;">▶</button>
+        </div>
+
+        <div class="calendar-grid" id="calendar-board">
+            </div>
+    </div>
+</body>
+</html>
