@@ -172,3 +172,59 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+let temporarySelectedTime = null; // 임시 저장 시간 변수
+
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. 시간 설정 폼 제출 시 2차 확인 모달 팝업 트리거
+    const timeForm = document.getElementById('time-reset-form');
+    if (timeForm) {
+        timeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // 입력창에서 유저가 지정한 시간(예: "02:30") 추출
+            const selectedTime = document.getElementById('reset-time-input').value;
+            temporarySelectedTime = selectedTime;
+
+            // 모달 안의 <span> 영역에 일본어 문구 출력용 시간 강제 대입
+            document.getElementById('modal-target-time').innerText = selectedTime;
+
+            // 모달 열기
+            document.getElementById('time-confirm-modal').style.display = 'flex';
+        });
+    }
+
+    // 2. 모달 내 [確定する(확정하기)] 버튼 최종 클릭 시 백엔드 유저 모델 전송
+    document.getElementById('btn-time-submit').addEventListener('click', async () => {
+        if (!temporarySelectedTime) return;
+
+        try {
+            // 💡 유저 정보 수정을 처리하는 기존 API 엔드포인트 혹은 신규 API 주소 매핑
+            const response = await fetch('/api/user/update-reset-time/', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ reset_time: temporarySelectedTime })
+            });
+
+            if (response.ok) {
+                // 성공 시 모달 닫기 및 알림
+                document.getElementById('time-confirm-modal').style.display = 'none';
+            } else {
+                alert('時間の変更に失敗しました。');
+            }
+        } catch (error) {
+            console.error('Error updating reset time:', error);
+        }
+    });
+
+    // 3. 모달 내 [キャンセル(취소)] 버튼 클릭 시 창 닫기
+    document.getElementById('btn-time-cancel').addEventListener('click', () => {
+        document.getElementById('time-confirm-modal').style.display = 'none';
+        temporarySelectedTime = null;
+    });
+
+});

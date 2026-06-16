@@ -260,6 +260,21 @@ class CategoryDetailAPIView(APIView):
         category.delete()
         return Response({"message": "削除完了"}, status=status.HTTP_204_NO_CONTENT)
     
+class UserResetTimeAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        new_time = request.data.get('reset_time') # 예: "02:00" 형태로 들어옴
+        if not new_time:
+            return Response({"error": "時間が指定されていません。"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 현재 로그인된 커스텀 유저 인스턴스의 필드 교체 후 데이터베이스 저장
+        user = request.user
+        user.reset_time = new_time
+        user.save()
+        
+        return Response({"status": "success"}, status=status.HTTP_200_OK)
+
 def weekly_analysis(request):
     # 주간 분석에 필요한 데이터 처리가 있다면 여기에 작성
     return render(request, 'timefit/week.html')
