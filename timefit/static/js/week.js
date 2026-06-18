@@ -29,7 +29,7 @@ function updateWeekDisplay() {
     const sundayObj = new Date(currentWeekMonday);
     sundayObj.setDate(mondayObj.getDate() + 6); // 일요일은 월요일 + 6일
 
-    const displayTag = document.getElementById('current-week-display');
+    const displayTag = document.getElementById('current-date-display');
     if (displayTag) {
         displayTag.innerText = `${formatDateString(mondayObj)} ~ ${formatDateString(sundayObj)}`;
     }
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadWeeklyAnalysis();
         });
 
-        // ▶ 다음 주 클릭 시
+        // ▶ 다음 주 클릭 시git 
         btnNextWeek.addEventListener('click', () => {
             const targetDate = new Date(currentWeekMonday);
             targetDate.setDate(targetDate.getDate() + 7);

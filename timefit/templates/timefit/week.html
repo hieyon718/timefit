@@ -12,86 +12,80 @@
 </head>
 <body>
 
-    <nav class="sidebar-index">
-        <div class="sidebar-brand">⚡ TimeFit</div>
-        <button class="index-tab active" id="tab-weekly">週次分析</button>
-        <button class="index-tab" id="tab-monthly" onclick="alert('月次分析は現在準備中です。')">月次分析</button>
-        <a href="/home/" style="margin-top: auto; padding: 20px; color: #a0aec0; text-decoration: none; font-size: 13px; font-weight: bold; text-align: center; border-top: 1px solid #34495e;">← タスク画面に戻る</a>
-    </nav>
+    <div class="app-container week-layout-container">
+        
+        <header>
+            <div>
+                <h1>TimeFit</h1>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'home' %}">🏠</a>
+            </div>
+        </header>
 
-    <main class="main-content">
+        <div class="date-sub">⚡ 週刊分析レポート</div>
 
         <div class="week-navigator-container" style="margin-bottom: 24px;">
-            <div class="date-sub" style="font-size: 13px; font-weight: bold; color: #7f8c8d; margin-bottom: 6px;">⚡ 週刊分析レポート</div>
-            
             <div class="week-navigator" style="display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 10px 16px; border-radius: 10px; border: 1px solid #e9ecef;">
                 <button id="btn-prev-week" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #2c3e50; padding: 10px;">◀</button>
-                
-                <div id="current-week-display" style="font-size: 16px; font-weight: bold; color: #2c3e50; font-family: monospace;">
-                    2026.06.15 ~ 2026.06.21
-                </div>
+                <div id="current-date-display" style="font-size: 18px; font-weight: bold; color: #2c3e50;">2026.06.15 ~ 2026.06.21</div>
                 
                 <button id="btn-next-week" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #2c3e50; padding: 10px;">▶</button>
             </div>
         </div>
         
-        <section id="section-weekly" class="section-card" style="background:#fff; padding:24px; border-radius:16px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom:24px;">
-            <div class="content-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h3 style="margin:0;">🧱 週次タイムフィットブロック</h3>
-                <div class="date-range" id="weekly-range-text" style="font-size:14px; color:#7f8c8d;">📅 期間: 読み込み中...</div>
+        <section id="section-weekly" class="analysis-card">
+            <div class="card-content-header">
+                <h3>🧱 週次タイムフィットブロック</h3>
             </div>
 
-            <div class="weekly-grid-container">
+            <div class="weekly-grid-overflow-wrapper">
                 <div class="grid-board" id="weekly-grid-board">
                     </div>
+            </div>
 
-                <div class="legend-container" style="display:flex; gap:16px; margin-top:16px; font-size:12px; color:#7f8c8d; justify-content:flex-end;">
-                    <div class="legend-item" style="display:flex; align-items:center; gap:6px;"><div class="legend-dot block-success" style="width:12px; height:12px; border-radius:3px;"></div>成功 (予測一致)</div>
-                    <div class="legend-item" style="display:flex; align-items:center; gap:6px;"><div class="legend-dot block-underestimated" style="width:12px; height:12px; border-radius:3px;"></div>過小評価 (時間超過)</div>
-                    <div class="legend-item" style="display:flex; align-items:center; gap:6px;"><div class="legend-dot block-postponed" style="width:12px; height:12px; border-radius:3px;"></div>先送り (未完了)</div>
-                    <div class="legend-item" style="display:flex; align-items:center; gap:6px;"><div class="legend-dot block-default" style="width:12px; height:12px; border-radius:3px;"></div>一般完了</div>
-                </div>
+            <div class="legend-container">
+                <div class="legend-item"><div class="legend-dot block-success"></div>成功</div>
+                <div class="legend-item"><div class="legend-dot block-underestimated"></div>超過</div>
+                <div class="legend-item"><div class="legend-dot block-postponed"></div>先送り</div>
+                <div class="legend-item"><div class="legend-dot block-default"></div>一般</div>
             </div>
         </section>
 
-        <section class="section-card" style="background:#fff; padding:24px; border-radius:16px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom:24px;">
-            <div class="content-header" style="margin-bottom:16px;">
-                <h3 style="margin:0;">⏱️ カテゴリ別 計画 vs 実績</h3>
+        <section class="analysis-card">
+            <div class="card-content-header">
+                <h3>⏱️ カテゴリ別 計画 vs 実績</h3>
             </div>
-            
             <div id="category-stats-wrapper">
-            </div>
+                </div>
         </section>
 
-        <section class="section-card" style="background:#fff; padding:24px; border-radius:16px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom:24px;">
-            <div class="content-header" style="margin-bottom:16px;">
-                <h3 style="margin:0;">🕳️ 時間ブラックホール (想定超過タスク TOP 3)</h3>
+        <section class="analysis-card">
+            <div class="card-content-header">
+                <h3>🕳️ 時間ブラックホール (TOP 3)</h3>
             </div>
-            
             <div id="blackhole-list-wrapper">
                 <p style="color:#7f8c8d; font-size:14px;">集計中...</p>
             </div>
         </section>
 
-        <section class="section-card" style="background:#fff; padding:24px; border-radius:16px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom:24px;">
-            <div class="content-header" style="margin-bottom:16px;">
-                <h3 style="margin:0;">🎯 今週の総合タイムフィットスコア</h3>
+        <section class="analysis-card" style="margin-bottom: 10px;">
+            <div class="card-content-header">
+                <h3>🎯 今週の総合タイムフィットスコア</h3>
             </div>
-            <div class="score-container-layout" style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
-                
+            <div class="score-container-layout">
                 <div class="donut-chart-box">
                     <div class="circle-chart">
                         <span class="center-score-text" id="timefit-score-value">0%</span>
                     </div>
                 </div>
-                
-                <div class="fact-coaching-box" id="score-fact-msg" style="flex: 1; margin-top: 0; border-left: 4px solid #9b59b6; padding: 12px 16px; background: #f8f9fa; border-radius: 0 8px 8px 0; font-size: 13.5px; font-weight: 500;">
+                <div class="fact-coaching-box score-coaching-theme" id="score-fact-msg">
                     集計中...
                 </div>
             </div>
         </section>
 
-    </main>
+    </div>
 
 </body>
 </html>

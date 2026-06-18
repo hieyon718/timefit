@@ -112,12 +112,13 @@ header h1 {
 
 /* [기본] 카렌다 버튼 (차분한 회색 톤) */
 .sidebar ul li:nth-child(1) a {
-    background-color: #f1f2f6;
-    color: #57606f;
-    border: 1px solid #ced6e0;
+    background-color: #f1c40f; /* 🟡 Warm Yellow */
+    color: #ffffff;
+    border: 1px solid #f39c12;
 }
 .sidebar ul li:nth-child(1) a:hover {
-    background-color: #e4e7ed;
+    background-color: #f39c12; /* 호버 시 약간 짙어짐 */
+    transform: translateY(-1px);
 }
 
 /* [노랑] 주차 분석 버튼 (투두 수정모드의 부드러운 노란색 계열) */
@@ -127,17 +128,6 @@ header h1 {
     border: 1px solid #f39c12;
 }
 .sidebar ul li:nth-child(2) a:hover {
-    background-color: #f39c12; /* 호버 시 약간 짙어짐 */
-    transform: translateY(-1px);
-}
-
-/* [주황] 월차 분석 버튼 (선명한 오렌지색 계열) */
-.sidebar ul li:nth-child(3) a {
-    background-color: #f1c40f; /* 🟡 Warm Yellow */
-    color: #ffffff;
-    border: 1px solid #f39c12;
-}
-.sidebar ul li:nth-child(3) a:hover {
     background-color: #f39c12; /* 호버 시 약간 짙어짐 */
     transform: translateY(-1px);
 }

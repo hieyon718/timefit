@@ -1,314 +1,261 @@
-:root {
-    --bg-color: #f1f3f5;
-    --card-bg: #ffffff;
-    --text-main: #2c3e50;
-    --border-color: #e9ecef;
-    
-    /* 🧱 타임핏 블록 상태별 핵심 컬러 지정 */
-    --color-success: #2ecc71;     /* 🟢 성공: 오차 ±10% 이내 */
-    --color-underestimated: #e74c3c; /* 🔴 과소평가: 실제 시간이 훨씬 더 걸림 */
-    --color-postponed: #f1c40f;      /* 🟡 이월: 미완료 상태 */
-    --color-default-grey: #bdc3c7;   /* ⚪ 기타 완료 (기준 외) */
+/* timefit/static/css/week.css */
+
+/* 1. 홈 화면 레이아웃 스펙 일치 (480px 컴팩트 뷰포트) */
+.week-layout-container {
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
-body {
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-main);
-    margin: 0;
-    padding: 0;
+/* 주간 분석 네비게이터 바 */
+.week-navigator-bar {
     display: flex;
-    height: 100vh;
-    overflow: hidden;
-}
-
-/* 📁 1. 왼쪽 파일 인덱스 메뉴 레이아웃 */
-.sidebar-index {
-    width: 220px;
-    background: #2c3e50;
-    display: flex;
-    flex-direction: column;
-    padding-top: 24px;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-}
-
-.sidebar-brand {
-    color: white;
-    font-size: 20px;
-    font-weight: bold;
-    padding: 0 24px;
-    margin-bottom: 32px;
-    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
+    background: #f8f9fa;
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    margin-bottom: 20px;
 }
 
-.index-tab {
+.nav-arrow-btn {
     background: none;
     border: none;
-    color: #a0aec0;
-    font-size: 15px;
-    font-weight: bold;
-    text-align: left;
-    padding: 16px 24px;
+    font-size: 16px;
     cursor: pointer;
-    transition: all 0.2s;
-    border-left: 4px solid transparent;
-    width: 100%;
+    color: #2c3e50;
+    padding: 6px 10px;
 }
 
-.index-tab:hover {
-    color: white;
-    background: #34495e;
-}
-
-/* ⚠️ 활성화된 파일 인덱스 탭 스타일 */
-.index-tab.active {
-    color: white;
-    background: #1a252f;
-    border-left: 4px solid #3498db;
-}
-
-/* 📋 메인 대시보드 콘텐츠 영역 */
-.main-content {
-    flex: 1;
-    padding: 40px;
-    overflow-y: auto;
-    background: #f8f9fa;
-}
-
-.content-header {
-    margin-bottom: 32px;
-}
-
-.content-header h2 {
-    margin: 0 0 8px 0;
-    font-size: 24px;
-}
-
-.date-range {
+.week-range-text {
     font-size: 14px;
-    color: #7f8c8d;
+    font-weight: bold;
+    color: #2c3e50;
+    font-family: monospace;
 }
 
-/* 🧱 2. 주간 7열 그리드 보드 스타일 */
-.weekly-grid-container {
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-    margin-bottom: 24px;
+/* 📦 개별 독립 섹션 박스화 (그림자 및 테두리 정밀 마감) */
+.analysis-card {
+    background: #ffffff !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 12px !important;
+    padding: 16px !important;
+    margin-bottom: 16px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important; /* 깔끔한 박스 레이어 형태 형성 */
+}
+
+.card-content-header {
+    margin-bottom: 14px;
+}
+.card-content-header h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+/* 3. 🧱 주간 7열 그리드 보드 (480px 대응 가로 롤링 전용) */
+.weekly-grid-overflow-wrapper {
+    width: 100%;
+    /* 1000px 환경에서는 가로 스크롤이 필요 없으므로 숨김 (필요시 감싸기만 유지) */
+    overflow-x: visible; 
+    padding-bottom: 6px;
 }
 
 .grid-board {
     display: grid;
-    grid-template-columns: repeat(7, 1fr); /* 완벽한 7열 배치 */
-    gap: 12px;
-    margin-top: 16px;
+    /* 55px 고정 대신 1fr(균등 비율)을 사용하여 가용 폭 100%를 완벽하게 7등분합니다 */
+    grid-template-columns: repeat(7, 1fr) !important; 
+    gap: 6px; /* 화면이 넓어진 만큼 열 사이의 간격도 시원하게 조정 */
+    margin-top: 12px;
 }
 
 .grid-column {
     background: #f8f9fa;
     border-radius: 8px;
-    padding: 8px;
-    min-height: 280px;
+    padding: 6px 4px;
+    min-height: 240px; /* 넓어진 화면에 맞춰 기둥의 최소 높이도 적절히 확보 */
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
+    border: 1px solid #edf2f7;
 }
 
 .day-header {
     text-align: center;
-    font-size: 13px;
+    font-size: 13px; /* 가독성을 위해 폰트 크기 살짝 업 */
     font-weight: bold;
     color: #7f8c8d;
-    padding-bottom: 8px;
-    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e9ecef;
     margin-bottom: 4px;
 }
 
-/* 개별 타스크 미니 블록 스타일 */
+/* 개별 투두 미니 블록 고정 스타일 */
 .todo-block {
-    font-size: 11px;
-    color: white;
-    padding: 8px;
-    border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-    word-break: break-all;
-    transition: transform 0.1s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    font-size: 11px; /* 폰트 크기 살짝 업 */
+    color: #ffffff !important;
+    padding: 8px 6px !important; /* 내부 여백을 늘려 더 보기 편하게 변경 */
+    border-radius: 4px !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    word-break: break-all !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+    border: none !important;
+    white-space: nowrap
 }
 
-.todo-block:hover {
-    transform: scale(1.03);
-    filter: brightness(0.95);
+/* 🎨 완벽한 고정 색상 클래스 강제 주입 */
+.block-success { 
+    background-color: #2ecc71 !important; 
+}
+.block-underestimated { 
+    background-color: #e74c3c !important; 
+}
+.block-postponed { 
+    background-color: #f1c40f !important; 
+}
+.block-default { 
+    background-color: #bdc3c7 !important; 
 }
 
-/* 상태별 맵핑 클래스 */
-.block-success { background-color: var(--color-success); }
-.block-underestimated { background-color: var(--color-underestimated); }
-.block-postponed { background-color: var(--color-postponed); }
-.block-default { background-color: var(--color-default-grey); }
-
-/* 범례(Legend) 스타일 */
+/* 4. 범례 레이아웃 슬림화 */
 .legend-container {
     display: flex;
-    gap: 16px;
-    margin-top: 16px;
-    font-size: 12px;
+    gap: 10px;
+    margin-top: 12px;
+    font-size: 11px;
     color: #7f8c8d;
-    justify-content: flex-end;
+    justify-content: center;
+    flex-wrap: wrap;
 }
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; margin-right: 2px; }
 
-.legend-item { display: flex; align-items: center; gap: 6px; }
-.legend-dot { width: 12px; height: 12px; border-radius: 3px; }
-
-/* 월간 분석 임시 블라인드 처리 (추후 개발) */
-.hidden { display: none !important; }
-
-/* 📊 가로 막대 통계 레이아웃 */
+/* 5. ⏱️ 카테고리별 막대 그래프 스케일 */
 .category-stat-row {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #edf2f7;
+}
+.category-stat-row:last-child {
+    border-bottom: none;
 }
 .stat-meta {
     display: flex;
     justify-content: space-between;
-    font-size: 14px;
-    margin-bottom: 6px;
-    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 4px;
 }
 .bar-container {
     background: #e9ecef;
-    border-radius: 8px;
-    height: 24px;
+    border-radius: 6px;
+    height: 18px;
     overflow: hidden;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    margin-bottom: 4px;
 }
 .bar-fill {
     height: 100%;
-    border-radius: 4px;
-    transition: width 0.5s ease;
     display: flex;
     align-items: center;
-    padding-left: 8px;
+    padding-left: 6px;
     color: white;
-    font-size: 11px;
-    font-weight: bold;
+    font-size: 10px;
 }
 
-/* 💡 客観的事実（Fact）コーチングの文章スタイル */
-.fact-coaching-box {
-    background: #f8f9fa;
-    border-left: 4px solid #2c3e50;
-    padding: 12px 16px;
-    border-radius: 0 8px 8px 0;
-    font-size: 13.5px;
-    color: #34495e;
-    margin-top: 16px;
-    font-weight: 500;
-}
-.fact-highlight {
-    color: #e74c3c;
-    font-weight: bold;
-}
-.fact-success {
-    color: #2ecc71;
-    font-weight: bold;
-}
-.bold-black {
-    font-weight: bold;
-    color: #000000;
-}
-
-/* 🕳️ 3번 시간 블랙홀 디자인 리스트 요소 */
+/* 6. 🕳️ 블랙홀 리스트 */
 .blackhole-ordered-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 6px;
+    padding-left: 0 !important; /* 👈 브라우저 기본 왼쪽 패딩 완전히 제거 */
+    margin: 0 !important;
 }
 .blackhole-item {
     display: flex;
     align-items: center;
     background: #f8f9fa;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
 }
 .bh-rank-badge {
     background: #e74c3c;
     color: white;
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: bold;
-    margin-right: 12px;
+    font-size: 10px;
+    margin-right: 8px;
 }
-.bh-details {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.bh-task-title {
-    font-size: 14px;
-    font-weight: 600;
-}
-.bh-task-cat {
-    font-size: 11px;
-    color: #95a5a6;
-}
-.bh-excess-time {
-    font-size: 13px;
-    font-weight: 500;
-    color: #34495e;
-}
+.bh-task-title { font-size: 12.5px; font-weight: 600; }
+.bh-task-cat { font-size: 11px; color: #95a5a6; margin-left: 4px; }
+.bh-excess-time { font-size: 11.5px; margin-left: auto; }
 
-/* 🎯 4번 종합 타임핏 미니멀 도넛 차트 레이아웃 */
+/* 7. 🎯 종합 점수 도넛 컴포넌트 */
 .score-container-layout {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 24px;
-    flex-wrap: wrap;
+    gap: 12px;
 }
 .donut-chart-box {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
+    position: relative;
+    padding: 0;
 }
 .circle-chart {
-    width: 100px;
-    height: 100px;
+    position: relative;
+    width: 90px;
+    height: 90px;
     border-radius: 50%;
-    background: conic-gradient(#e9ecef 0% 100%); /* 기본 그레이 기본값 */
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.6s ease-in-out;
 }
 .circle-chart::before {
     content: "";
     position: absolute;
-    width: 76px;
-    height: 76px;
+    width: 68px;
+    height: 68px;
     border-radius: 50%;
-    background: var(--card-bg); /* 카드의 새하얀 배경색과 맞춰 구멍을 뜷음 */
+    background: #ffffff;
 }
 .center-score-text {
     position: relative;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     color: #2c3e50;
     z-index: 5;
+}
+.fact-coaching-box {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #4a5568;
+    border-left: 4px solid #2c3e50;
+}
+
+.fact-coaching-box .fact-highlight {
+    color: #e74c3c;
+    font-weight: 800;
+}
+
+.fact-coaching-box .fact-success {
+    color: #2ecc71;
+    font-weight: 800;
+}
+
+.fact-coaching-box .bold-black {
+    color: #2c3e50;
+    font-weight: 800;
+}
+.score-coaching-theme {
+    border-left-color: #9b59b6;
 }
