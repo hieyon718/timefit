@@ -9,7 +9,7 @@ from django.utils import timezone
 from .models import Todo, Category
 from .serializers import TodoSerializer
 from rest_framework.generics import get_object_or_404
-from datetime import timedelta
+from datetime import timedelta, datetime
 from .models import Todo
 from .serializers import TodoSerializer
 from django.utils.dateparse import parse_date
@@ -287,24 +287,39 @@ class WeeklyAnalysisAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        today = timezone.localdate()
+        # 📅 1. 기준 날짜 타겟팅 및 안전한 현지 시간대 파싱
+        start_date_str = request.query_params.get('start_date', None)
         
-        # 📅 1. 주간 범위 세팅
-        start_of_week = today - timedelta(days=today.weekday())
+        if start_date_str:
+            try:
+                # 프론트가 준 날짜 문자열 파싱
+                start_of_week = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                # 포맷이 깨져서 오면 장고 서버 기준 이번 주 월요일로 롤백
+                today = timezone.localdate()
+                start_of_week = today - timedelta(days=today.weekday())
+        else:
+            # 첫 진입으로 파라미터가 없으면 이번 주 월요일 자동 세팅
+            today = timezone.localdate()
+            start_of_week = today - timedelta(days=today.weekday())
+
+        # 해당 주의 일요일 계산
         end_of_week = start_of_week + timedelta(days=6)
 
+        # 🚀 [🔑 누락 오류 해결]: 이번 주에 해당하는 로그인 유저의 투두 데이터셋 명시적 정의
+        # select_related('category')를 붙여주어야 반복문 내 오류 및 속도 저하를 완벽 방어합니다.
         weekly_todos = Todo.objects.filter(
             user=request.user,
             target_date__range=[start_of_week, end_of_week]
-        ).order_by('created_at')
+        ).select_related('category')
 
-        # 🧱 1번 : 요일별 한눈에 보기 >> 데이터 공간
+        # 🧱 1번 : 요일별 데이터 공간
         weekly_blocks = {i: [] for i in range(7)}
-        # ⏱️ 2번 : 카테고리별 시간 분석 >> 데이터 공간
+        # ⏱️ 2번 : 카테고리별 시간 분석 공간
         category_stats = {}
-        # 🕳️ 3번 : 가장 시간차이가 심한 할일 top3 >> 데이터 공간
+        # 🕳️ 3번 : 블랙홀 top3 공간
         blackhole_candidates = []
-        # 🎯 4번 : 종합 평가 >> 데이터 공간
+        # 🎯 4번 : 종합 평가 공간
         total_completed_with_time = 0
         success_prediction_count = 0
 
@@ -347,7 +362,7 @@ class WeeklyAnalysisAPIView(APIView):
 
                 # 4번 스코어 카운팅
                 total_completed_with_time += 1
-                variance_ratio = overdue_time / todo.estimated_time
+                variance_ratio = overdue_time / todo.estimated_time if todo.estimated_time > 0 else 0
                 if abs(variance_ratio) <= 0.1:
                     success_prediction_count += 1
 
@@ -380,13 +395,13 @@ class WeeklyAnalysisAPIView(APIView):
             else:
                 category_fact_msg = f"💡 今週、<span class='fact-success'>「{worst_category_name}」</span>カテゴリは予想より平均<span class='fact-success'>{abs(worst_error_value)}分</span>早く終了しています。"
         else:
-            category_fact_msg = "💡 すべてのカテゴリにおいて、計画と実績の誤差가が非常に少なく、<span class='fact-success'>安定した自己ペース</span>を維持しています。"
+            category_fact_msg = "💡 すべてのカテゴリにおいて、計画と実績の誤差が非常に少なく、<span class='fact-success'>安定した自己ペース</span>を維持しています。"
 
         # 🕳️ 3번 블랙홀 정렬 (상위 3개)
         blackhole_candidates.sort(key=lambda x: x['overdue_time'], reverse=True)
         top_three_blackholes = blackhole_candidates[:3]
 
-        # 🎯 4번 스코어 계산 및 코칭 팩트 수립 (수정 완료: == 사용)
+        # 🎯 4번 스코어 계산 및 코칭 팩트 수립
         timefit_score = 0
         if total_completed_with_time > 0:
             timefit_score = round((success_prediction_count / total_completed_with_time) * 100)
@@ -399,13 +414,13 @@ class WeeklyAnalysisAPIView(APIView):
         elif timefit_score >= 50:
             score_fact_msg = f"今週の予測正確度は<span class='bold-black'>{timefit_score}%</span>です。いくつかの特定のタスクが全体の予測バランスに影響を与えています。"
         else:
-            score_fact_msg = f"今週の予測正確度は<span class='bold-black'>{timefit_score}%</span>です。計画時、予測時間を今より1.5倍ぐらい余裕を持ってみて下さい。"
+            score_fact_msg = f"今週의 예측 정확도는 <span class='bold-black'>{timefit_score}%</span>입니다. 계획할 때 예측 시간을 지금보다 1.5배 정도 여유 있게 잡아 보세요."
 
         return Response({
             "start_date": start_of_week.strftime('%Y-%m-%d'),
             "end_date": end_of_week.strftime('%Y-%m-%d'),
-            "weekly_blocks": weekly_blocks,
-            "category_stats": category_list,
+            "weekly_blocks": weekly_blocks,     
+            "category_stats": category_list,     
             "category_coaching": category_fact_msg,
             "top_blackholes": top_three_blackholes,
             "timefit_score": timefit_score,
