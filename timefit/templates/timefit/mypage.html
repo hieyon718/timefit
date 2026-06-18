@@ -6,6 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeFit - マイページ</title>
     <link rel="stylesheet" href="{% static 'css/mypage.css' %}"> 
+    
+    <!-- 🟡 [해결책] 템플릿 내부에 직접 스타일을 선언하여 디자인을 강제 적용합니다. -->
+    <style>
+        .btn-google-connect {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f1c40f !important; /* 🟡 Warm Yellow (우선순위 강제) */
+            color: #ffffff !important;
+            border: 1px solid #f39c12 !important;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none !important; /* 밑줄 제거 */
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(241, 196, 15, 0.15);
+        }
+        .btn-google-connect:hover {
+            background-color: #f39c12 !important; /* 호버 시 약간 짙어짐 */
+            transform: translateY(-1px);
+        }
+    </style>
 </head>
 <body>
 
@@ -19,22 +43,29 @@
         {% if user.profile_image_url %}
             <img src="{{ user.profile_image_url }}" alt="Profile" class="profile-img">
         {% else %}
-            <div class="profile-img" style="display:inline-block; line-height:80px; color:#aaa;">👤</div>
+            <div class="profile-img" style="display:inline-block; line-height:80px; color:#aaa; text-align: center; background: #edf2f7; font-size: 32px;">👤</div>
         {% endif %}
         <div class="username">{{ user.username }}</div>
         <div class="email">{{ user.email }}</div>
     </div>
 
     <div class="menu-list">
-        <div class="menu-item">
+        <div class="menu-item" style="display: flex; justify-content: space-between; align-items: center;">
             <span>Googleアカウント連携</span>
+            
             {% if user.is_google_user %}
                 <span class="status-badge status-connected">連携済み</span>
             {% else %}
-                <span class="status-badge status-disconnected">未連携</span>
+                <!-- 💡 스코프 꼬임 방지를 위해 조건문 블록 내부에 직접 다시 한번 로드 -->
+                {% load socialaccount %} 
+                
+                <a href="{% provider_login_url 'google' process='connect' %}" class="btn-google-connect">
+                    Google連携する
+                </a>
             {% endif %}
         </div>
-        <div class="menu-item">
+        
+        <div class="menu-item" style="display: flex; justify-content: space-between; align-items: center;">
             <span>更新基準時間</span>
             <span style="color: #7f8c8d; font-weight: bold;">{{ user.reset_time|time:"H:i" }}</span>
         </div>

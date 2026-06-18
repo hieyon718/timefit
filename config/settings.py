@@ -28,6 +28,9 @@ AUTH_USER_MODEL = 'timefit.User'
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_SECRET_KEY = os.getenv("GOOGLE_SECRET_KEY")
 
+# 구글 로그인 버튼 누르면 확인 창 없이 즉시 구글 계정 선택창으로 이동
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
