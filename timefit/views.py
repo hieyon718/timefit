@@ -284,83 +284,132 @@ def monthly_analysis(request):
     return render(request, 'timefit/monthly.html')
    
 class WeeklyAnalysisAPIView(APIView):
-    """
-    고정 주간 방식(월요일 리셋)의 분석 데이터를 제공하는 API입니다.
-    첫 번째 단계로 7열 그리드 차트용 요일별 블록 데이터를 리턴합니다.
-    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         today = timezone.localdate()
         
-        # 📅 1. 이번 주 월요일 날짜 계산하기
-        # today.weekday()는 월요일(0) ~ 일요일(6)을 반환합니다.
+        # 📅 1. 주간 범위 세팅
         start_of_week = today - timedelta(days=today.weekday())
         end_of_week = start_of_week + timedelta(days=6)
 
-        # 2. 이번 주 월요일부터 일요일까지의 현재 유저 투두 필터링
         weekly_todos = Todo.objects.filter(
             user=request.user,
             target_date__range=[start_of_week, end_of_week]
         ).order_by('created_at')
 
-        # 3. 요일별(0~6)로 블록 데이터를 분류할 주머니(딕셔너리) 준비
-        # 월(0), 화(1), 수(2), 목(3), 금(4), 토(5), 일(6)
+        # 🧱 1번 : 요일별 한눈에 보기 >> 데이터 공간
         weekly_blocks = {i: [] for i in range(7)}
-
-        # [2번 리포트] 카테고리별 통계 주머니
+        # ⏱️ 2번 : 카테고리별 시간 분석 >> 데이터 공간
         category_stats = {}
+        # 🕳️ 3번 : 가장 시간차이가 심한 할일 top3 >> 데이터 공간
+        blackhole_candidates = []
+        # 🎯 4번 : 종합 평가 >> 데이터 공간
+        total_completed_with_time = 0
+        success_prediction_count = 0
 
-        # 4. 조회된 투두들을 각 요일 주머니에 직렬화(JSON화)해서 적재
         for todo in weekly_todos:
-            # 주간 차트에서는 날짜 전체보다 요일 인덱스가 핵심 기준이 됩니다.
             weekday_index = todo.target_date.weekday() 
             
-            # 시리얼라이저를 통과시켜 카테고리명, 컬러 등이 포함된 정제된 데이터 추출
+            # 1번 요일별 쪼개기용 직렬화
             serializer = TodoSerializer(todo, context={'request': request})
             weekly_blocks[weekday_index].append(serializer.data)
 
-            # 2번 기능 연산: 완료되었고 예상 시간과 실제 시간이 모두 존재하는 경우만 집계
+            # 2, 3, 4번 집계를 위한 조건 판별
             if todo.is_completed and todo.estimated_time is not None and todo.actual_time is not None:
-                cat_id = todo.category.id if todo.category else 0 # 미분류는 id=0 처리
+                cat_id = todo.category.id if todo.category else 0
                 cat_name = todo.category.name if todo.category else "未分類"
                 cat_color = todo.category.color if todo.category else "#bdc3c7"
 
+                # 2번 카테고리 누적
                 if cat_id not in category_stats:
                     category_stats[cat_id] = {
                         "name": cat_name,
                         "color": cat_color,
                         "est_total": 0,
                         "act_total": 0,
-                        "total_diff": 0,       # 오차 합산용 (실제 - 예상)
-                        "completed_count": 0   # 평균을 내기 위한 완료 타스크 수
+                        "total_diff": 0,
+                        "completed_count": 0
                     }
                 category_stats[cat_id]["est_total"] += todo.estimated_time
                 category_stats[cat_id]["act_total"] += todo.actual_time
                 category_stats[cat_id]["total_diff"] += (todo.actual_time - todo.estimated_time)
                 category_stats[cat_id]["completed_count"] += 1
 
-        # 카테고리별 최종 평균 오차(Fact) 가공
-        category_list = []
-        for cat_id, stats in category_stats.items():
-            avg_error = 0
-            if stats["completed_count"] > 0:
-                # 해당 카테고리의 한 타스크당 평균 오차 분(Minute) 계산
-                avg_error = round(stats["total_diff"] / stats["completed_count"])
+                # 3번 블랙홀 후보 누적
+                overdue_time = todo.actual_time - todo.estimated_time
+                if overdue_time > 0:
+                    blackhole_candidates.append({
+                        "content": todo.content,
+                        "category_name": cat_name,
+                        "overdue_time": overdue_time
+                    })
 
+                # 4번 스코어 카운팅
+                total_completed_with_time += 1
+                variance_ratio = overdue_time / todo.estimated_time
+                if abs(variance_ratio) <= 0.1:
+                    success_prediction_count += 1
+
+        # ⏱️ 2번 카테고리 최종 정제 및 팩트 메시지 수립
+        category_list = []
+        worst_category_name = None
+        worst_error_value = 0
+
+        for cat_id, stats in category_stats.items():
+            avg_error = round(stats["total_diff"] / stats["completed_count"]) if stats["completed_count"] > 0 else 0
             category_list.append({
                 "id": cat_id,
                 "name": stats["name"],
                 "color": stats["color"],
                 "est_total": stats["est_total"],
                 "act_total": stats["act_total"],
-                "avg_error": avg_error # 예: +23(23분 초과) 또는 -5(5분 조기단축)
+                "avg_error": avg_error
             })
 
-        # 5. 최종 가공된 주간 요일별 데이터 리턴
+            if abs(avg_error) > abs(worst_error_value):
+                worst_error_value = avg_error
+                worst_category_name = stats["name"]
+
+        category_fact_msg = ""
+        if not category_list:
+            category_fact_msg = "📊 今週の完了タスクおよび時間記録データがありません。"
+        elif worst_category_name and abs(worst_error_value) >= 15:
+            if worst_error_value > 0:
+                category_fact_msg = f"💡 今週、<span class='fact-highlight'>「{worst_category_name}」</span>カテゴリは予想より実際の所要時間が平均<span class='fact-highlight'>{worst_error_value}分</span>長くかかっています。"
+            else:
+                category_fact_msg = f"💡 今週、<span class='fact-success'>「{worst_category_name}」</span>カテゴリは予想より平均<span class='fact-success'>{abs(worst_error_value)}分</span>早く終了しています。"
+        else:
+            category_fact_msg = "💡 すべてのカテゴリにおいて、計画と実績の誤差가が非常に少なく、<span class='fact-success'>安定した自己ペース</span>を維持しています。"
+
+        # 🕳️ 3번 블랙홀 정렬 (상위 3개)
+        blackhole_candidates.sort(key=lambda x: x['overdue_time'], reverse=True)
+        top_three_blackholes = blackhole_candidates[:3]
+
+        # 🎯 4번 스코어 계산 및 코칭 팩트 수립 (수정 완료: == 사용)
+        timefit_score = 0
+        if total_completed_with_time > 0:
+            timefit_score = round((success_prediction_count / total_completed_with_time) * 100)
+
+        score_fact_msg = ""
+        if total_completed_with_time == 0:
+            score_fact_msg = "今週は時間予測の評価基準となるタスクがまだありません。"
+        elif timefit_score >= 80:
+            score_fact_msg = f"今週の予測正確度は<span class='bold-black'>{timefit_score}%</span>で非常に高い水準です。時間主導権を完全に握っています。"
+        elif timefit_score >= 50:
+            score_fact_msg = f"今週の予測正確度は<span class='bold-black'>{timefit_score}%</span>です。いくつかの特定のタスクが全体の予測バランスに影響を与えています。"
+        else:
+            score_fact_msg = f"今週の予測正確度は<span class='bold-black'>{timefit_score}%</span>です。計画時、予測時間を今より1.5倍ぐらい余裕を持ってみて下さい。"
+
         return Response({
-            "start_date": start_of_week,
-            "end_date": end_of_week,
+            "start_date": start_of_week.strftime('%Y-%m-%d'),
+            "end_date": end_of_week.strftime('%Y-%m-%d'),
             "weekly_blocks": weekly_blocks,
-            "category_stats": category_list #가로 막대그래프 데이터
+            "category_stats": category_list,
+            "category_coaching": category_fact_msg,
+            "top_blackholes": top_three_blackholes,
+            "timefit_score": timefit_score,
+            "score_coaching": score_fact_msg
         }, status=status.HTTP_200_OK)
+    
+    
