@@ -385,7 +385,7 @@ class WeeklyAnalysisAPIView(APIView):
         elif timefit_score >= 50:
             score_fact_msg = f"今週の予測正確度は<span class='bold-black'>{timefit_score}%</span>です。いくつかの特定のタスクが全体の予測バランスに影響を与えています。"
         else:
-            score_fact_msg = f"今週의 예측 정확도는 <span class='bold-black'>{timefit_score}%</span>입니다. 계획할 때 예측 시간을 지금보다 1.5배 정도 여유 있게 잡아 보세요."
+            score_fact_msg = f"今週の予測正確度は<span class='bold-black'>{timefit_score}%</span>です。計画をする際に予測時間を今より1.5倍ぐらい余裕を持ってみて下さい。"
 
         return Response({
             "start_date": start_of_week.strftime('%Y-%m-%d'),

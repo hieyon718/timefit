@@ -32,6 +32,7 @@ function updateDateDisplay() {
 }
 
 // 4. Todo 목록 로드 (Read)
+// 4. Todo 목록 로드 (Read)
 async function loadTodos() {
     const dateParam = formatDateString(currentSelectedDate);
     try {
@@ -47,9 +48,18 @@ async function loadTodos() {
             return;
         }
 
+        // 💡 현재 화면이 가리키는 날짜를 YYYY-MM-DD 문자열로 변환 (비교용)
+        const currentTargetDateStr = dateParam; 
+
         todos.forEach(todo => {
             const li = document.createElement('li');
-            li.className = `todo-item ${todo.is_completed ? 'is-completed' : ''}`;
+            
+            // 💡 [핵심 조건 분기] 
+            // 투두의 예정일이 현재 화면 날짜보다 과거이면서 + 아직 미완료(is_completed가 false)인 경우
+            const isPastIncomplete = (todo.target_date < currentTargetDateStr) && !todo.is_completed;
+            
+            // 과거 미완료 건이면 'past-incomplete' 클래스를 추가로 부여합니다.
+            li.className = `todo-item ${todo.is_completed ? 'is-completed' : ''} ${isPastIncomplete ? 'past-incomplete' : ''}`;
             
             let timeInfoHtml = '';
             if (todo.estimated_time) {
@@ -59,8 +69,9 @@ async function loadTodos() {
                 timeInfoHtml += `<div style="font-weight:bold; color:#2ecc71;">実績: ${todo.actual_time}分</div>`;
             }
 
+            // 💡 과거 미완료 상태이면 체크박스나 버튼들에 disabled 속성을 부여해 조작을 차단합니다.
             li.innerHTML = `
-                <input type="checkbox" class="todo-checkbox" data-id="${todo.id}" ${todo.is_completed ? 'checked' : ''}>
+                <input type="checkbox" class="todo-checkbox" data-id="${todo.id}" ${todo.is_completed ? 'checked' : ''} ${isPastIncomplete ? 'disabled' : ''}>
                 <span class="category-badge" style="background-color: ${todo.category_color || '#bdc3c7'}">
                     ${todo.category_name || '未分類'}
                 </span>
@@ -72,26 +83,23 @@ async function loadTodos() {
                             data-id="${todo.id}" 
                             data-content="${todo.content}" 
                             data-category="${todo.category || ''}" 
-                            data-estimated="${todo.estimated_time || ''}">✏️</button>
-                    <button class="delete-trigger-btn" data-id="${todo.id}" style="background:none; border:none; cursor:pointer;">🗑️</button>
+                            data-estimated="${todo.estimated_time || ''}"
+                            ${isPastIncomplete ? 'style="display:none;"' : ''}>✏️</button>
+                    <button class="delete-trigger-btn" data-id="${todo.id}" style="background:none; border:none; cursor:pointer; ${isPastIncomplete ? 'display:none;' : ''}">🗑️</button>
                 </div>
             `;
             listContainer.appendChild(li);
         });
 
-
-
-        // 리스트 동적 생성 후 이벤트 바인딩
-        document.querySelectorAll('.todo-checkbox').forEach(cb => {
+        // 리스트 동적 생성 후 이벤트 바인딩 (동일)
+        document.querySelectorAll('.todo-checkbox:not([disabled])').forEach(cb => {
             cb.addEventListener('change', handleCheckboxChange);
         });
 
-        //수정 이벤트 생성
         document.querySelectorAll('.edit-trigger-btn').forEach(btn => {
             btn.addEventListener('click', handleEditTrigger);
         });
 
-        //삭제 이벤트 생성
         document.querySelectorAll('.delete-trigger-btn').forEach(btn => {
             btn.addEventListener('click', handleDeleteTrigger);
         });

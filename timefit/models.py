@@ -170,6 +170,8 @@ class Todo(models.Model):
         verbose_name="作成日時"
     )
 
+    is_migrated = models.BooleanField(default=False)
+
     class Meta:
         db_table = 'todos'
         verbose_name = 'タスク'
@@ -184,34 +186,41 @@ class Todo(models.Model):
     @classmethod
     def migrate_incomplete_todos(cls, user):
         """
-        유저가 웹 진입 시 미완료된 과거의 태스크들을 
-        유저 모델에 설정된 reset_time(갱신 기준 시간)에 맞춰 오늘 날짜로 자동 이월합니다.
+        [리팩토링 버전] 미완료된 과거 태스크를 오늘 날짜로 '복사 이월'합니다.
+        과거의 태스크는 그대로 유지되어 흐릿하게 보여지게 됩니다.
         """
         from django.utils import timezone
         from datetime import datetime, timedelta
 
-        # 1. 유저 모델에 정의된 커스텀 기준 시간 획득 (예: datetime.time(0, 0))
         day_reset_time = user.reset_time 
-        
-        # 2. 현재 서버 시간 및 유저 기준 '현재 유효한 날짜' 연산
         now = timezone.localtime(timezone.now())
         current_time = now.time()
         
-        # 💡 현재 시각이 유저가 커스텀 설정한 reset_time보다 이전이라면, 
-        # 달력상 날짜는 오늘이어도 이 유저의 생활 패턴상으로는 아직 '어제'로 취급해야 합니다.
         if current_time < day_reset_time:
             app_today = now.date() - timedelta(days=1)
         else:
             app_today = now.date()
 
-        # 3. 이월 타겟 소팅: 미완료(is_completed=False) 상태이면서 
-        #    예정일(target_date)이 앱 기준 오늘(app_today)보다 과거인 할 일들만 필터링
+        # 1. 이월 대상 필터링 (기존과 동일)
         incomplete_past_todos = cls.objects.filter(
             user=user,
             is_completed=False,
             target_date__lt=app_today
         )
 
-        # 4. 🚀 단 한 번의 단일 데이터베이스 쿼리로 일괄 업데이트 실행 (안전성 최우선)
         if incomplete_past_todos.exists():
-            incomplete_past_todos.update(target_date=app_today)
+            new_todos = []
+            for todo in incomplete_past_todos:
+                # 2. 💡 복사본 객체 생성 (기존 id를 누락시켜 새 레코드로 인지하게 함)
+                new_todo = cls(
+                    user=todo.user,
+                    category=todo.category,
+                    content=todo.content,  # 할 일 내용 복사
+                    is_completed=False,    
+                    estimated_time=todo.estimated_time,
+                    target_date=app_today  # 🚀 날짜만 오늘로 매핑
+                )
+                new_todos.append(new_todo)
+            
+            # 3. 데이터베이스에 한 번의 쿼리로 일괄 삽입 (성능 최적화)
+            cls.objects.bulk_create(new_todos)

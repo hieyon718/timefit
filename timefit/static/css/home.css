@@ -95,6 +95,13 @@ header h1 {
     flex: 1;
 }
 
+/* 🔍 과거 마감 기한을 넘긴 미완료 투두 스타일 지정 */
+.past-incomplete {
+    opacity: 0.35 !important; /* 엄청 흐릿하게 투명도 조정 */
+    background-color: #f8f9fa !important; /* 배경을 살짝 톤다운 */
+    border-left: 3px solid #cbd5e0 !important; /* 비활성화 느낌의 그레이 바 */
+}
+
 /* 3. 기본 박스형 메뉴 버튼 공통 디자인 */
 .sidebar ul li a {
     display: block;
